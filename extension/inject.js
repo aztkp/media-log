@@ -10,8 +10,6 @@
 
   // ===== Logging Functions =====
   const STORAGE_KEY = 'radiko_skip_logs';
-  const GITHUB_TOKEN_KEY = 'radiko_github_token';
-  const GITHUB_REPO = 'aztkp/my-radiko';
 
   function getLogs() {
     try {
@@ -27,104 +25,6 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
     } catch (e) {
       console.error('[RadikoSkip] Failed to save logs:', e);
-    }
-  }
-
-  function getGitHubToken() {
-    return localStorage.getItem(GITHUB_TOKEN_KEY) || '';
-  }
-
-  function setGitHubToken(token) {
-    localStorage.setItem(GITHUB_TOKEN_KEY, token);
-  }
-
-  async function pushToGitHub(entry) {
-    const token = getGitHubToken();
-    if (!token) {
-      const newToken = prompt('GitHub Personal Access Token を入力してください（repo権限が必要）:');
-      if (!newToken) return false;
-      setGitHubToken(newToken);
-      return pushToGitHub(entry);
-    }
-
-    const now = new Date(entry.savedAt);
-    const yearMonth = now.getFullYear() + '-' + pad(now.getMonth() + 1);
-    const filePath = `logs/${yearMonth}.md`;
-    const day = now.getDate();
-    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
-    const time = entry.savedAt.slice(11, 16);
-
-    // Build entry markdown
-    let entryMd = `### ${time} - ${entry.stationId} - ${entry.programTitle || '番組名不明'}\n\n`;
-    if (entry.memo) {
-      entryMd += `> ${entry.memo}\n\n`;
-    }
-    if (entry.songs && entry.songs.length > 0) {
-      entryMd += '**曲リスト:**\n';
-      entry.songs.forEach(song => {
-        const songTime = song.time ? song.time.slice(11, 16) : '';
-        entryMd += `- ${songTime} ${song.title} / ${song.artist}\n`;
-      });
-      entryMd += '\n';
-    }
-    entryMd += `[番組リンク](${entry.url})\n\n---\n\n`;
-
-    try {
-      // Get current file content
-      const getRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-
-      let content, sha;
-      if (getRes.ok) {
-        const data = await getRes.json();
-        sha = data.sha;
-        content = atob(data.content);
-      } else {
-        // File doesn't exist, create new
-        content = `# ${now.getFullYear()}年${now.getMonth() + 1}月\n\n`;
-      }
-
-      // Check if day section exists
-      const dayHeader = `## ${now.getMonth() + 1}/${day} (${dayOfWeek})`;
-      if (!content.includes(dayHeader)) {
-        content += `${dayHeader}\n\n`;
-      }
-
-      // Append entry after day header
-      const dayIndex = content.indexOf(dayHeader);
-      const insertPos = content.indexOf('\n\n', dayIndex) + 2;
-      content = content.slice(0, insertPos) + entryMd + content.slice(insertPos);
-
-      // Push to GitHub
-      const putRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: `Add log: ${entry.stationId} - ${time}`,
-          content: btoa(unescape(encodeURIComponent(content))),
-          sha: sha
-        })
-      });
-
-      if (!putRes.ok) {
-        const err = await putRes.json();
-        if (err.message?.includes('Bad credentials')) {
-          localStorage.removeItem(GITHUB_TOKEN_KEY);
-          showToast('トークン無効');
-          return false;
-        }
-        throw new Error(err.message);
-      }
-
-      return true;
-    } catch (e) {
-      console.error('[RadikoSkip] GitHub push failed:', e);
-      showToast('GitHub保存失敗');
-      return false;
     }
   }
 
@@ -174,40 +74,55 @@
   function exportLogsAsMarkdown() {
     const logs = getLogs();
     if (logs.length === 0) {
-      return '# Radiko 聴取履歴\n\nまだ履歴がありません。';
+      return null;
     }
 
-    let md = '# Radiko 聴取履歴\n\n';
-
-    // Group by date
-    const byDate = {};
+    // Group by year-month
+    const byMonth = {};
     logs.forEach(log => {
-      const date = log.savedAt.slice(0, 10);
-      if (!byDate[date]) byDate[date] = [];
-      byDate[date].push(log);
+      const yearMonth = log.savedAt.slice(0, 7); // "2026-02"
+      if (!byMonth[yearMonth]) byMonth[yearMonth] = {};
+
+      const date = log.savedAt.slice(0, 10); // "2026-02-15"
+      if (!byMonth[yearMonth][date]) byMonth[yearMonth][date] = [];
+      byMonth[yearMonth][date].push(log);
     });
 
-    Object.keys(byDate).sort().reverse().forEach(date => {
-      md += `## ${date}\n\n`;
-      byDate[date].forEach(log => {
-        const time = log.savedAt.slice(11, 16);
-        md += `### ${time} - ${log.stationId} - ${log.programTitle || '番組名不明'}\n\n`;
-        if (log.memo) {
-          md += `> ${log.memo}\n\n`;
-        }
-        if (log.songs && log.songs.length > 0) {
-          md += '**曲リスト:**\n';
-          log.songs.forEach(song => {
-            const songTime = song.time ? song.time.slice(11, 16) : '';
-            md += `- ${songTime} ${song.title} / ${song.artist}\n`;
-          });
-          md += '\n';
-        }
-        md += `[番組リンク](${log.url})\n\n---\n\n`;
+    // Generate files for each month
+    const files = [];
+    Object.keys(byMonth).sort().forEach(yearMonth => {
+      const [year, month] = yearMonth.split('-');
+      let md = `# ${year}年${parseInt(month)}月\n\n`;
+
+      const dates = byMonth[yearMonth];
+      Object.keys(dates).sort().forEach(date => {
+        const d = new Date(date);
+        const day = d.getDate();
+        const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+        md += `## ${parseInt(month)}/${day} (${dayOfWeek})\n\n`;
+
+        dates[date].forEach(log => {
+          const time = log.savedAt.slice(11, 16);
+          md += `### ${time} - ${log.stationId} - ${log.programTitle || '番組名不明'}\n\n`;
+          if (log.memo) {
+            md += `> ${log.memo}\n\n`;
+          }
+          if (log.songs && log.songs.length > 0) {
+            md += '**曲リスト:**\n';
+            log.songs.forEach(song => {
+              const songTime = song.time ? song.time.slice(11, 16) : '';
+              md += `- ${songTime} ${song.title} / ${song.artist}\n`;
+            });
+            md += '\n';
+          }
+          md += `[番組リンク](${log.url})\n\n---\n\n`;
+        });
       });
+
+      files.push({ name: `${yearMonth}.md`, content: md });
     });
 
-    return md;
+    return files;
   }
 
   function downloadFile(content, filename) {
@@ -1078,20 +993,11 @@
     // Save button
     const saveBtn = document.getElementById('rsk-save');
     const memoInput = document.getElementById('rsk-memo');
-    saveBtn.addEventListener('click', async () => {
+    saveBtn.addEventListener('click', () => {
       const memo = memoInput.value.trim();
-      const entry = saveListeningLog(memo);
+      saveListeningLog(memo);
       memoInput.value = '';
-      saveBtn.disabled = true;
-      saveBtn.textContent = '...';
-
-      const success = await pushToGitHub(entry);
-      saveBtn.disabled = false;
-      saveBtn.textContent = '保存';
-
-      if (success) {
-        showToast('GitHubに保存しました');
-      }
+      showToast('保存しました');
     });
 
     // Enter key to save
@@ -1104,10 +1010,16 @@
     // Export button
     const exportBtn = document.getElementById('rsk-export');
     exportBtn.addEventListener('click', () => {
-      const md = exportLogsAsMarkdown();
-      const date = new Date().toISOString().slice(0, 10);
-      downloadFile(md, `radiko-log-${date}.md`);
-      showToast('エクスポートしました');
+      const files = exportLogsAsMarkdown();
+      if (!files || files.length === 0) {
+        showToast('ログがありません');
+        return;
+      }
+      // Download each month file
+      files.forEach(file => {
+        downloadFile(file.content, file.name);
+      });
+      showToast(`${files.length}ファイル出力`);
     });
 
     // Update now-playing info every 2 seconds

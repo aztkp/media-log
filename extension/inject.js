@@ -257,28 +257,75 @@
     return cal.trim();
   }
 
+  // Cache for program info
+  let cachedProgramInfo = null;
+  let lastProgramFetch = 0;
+
+  async function fetchProgramTitle(stationId, programTime) {
+    if (!stationId || !programTime) return '';
+
+    // Use cache if recent
+    const now = Date.now();
+    if (cachedProgramInfo && now - lastProgramFetch < 60000) {
+      return cachedProgramInfo;
+    }
+
+    try {
+      // Extract date from programTime (YYYYMMDDHHMMSS)
+      const dateStr = programTime.slice(0, 8);
+
+      // Fetch program schedule from radiko API
+      const url = `https://radiko.jp/v3/program/station/date/${dateStr}/${stationId}.xml`;
+      const res = await fetch(url);
+      if (!res.ok) return '';
+
+      const text = await res.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, 'text/xml');
+
+      // Find the program that matches our time
+      const programs = xml.querySelectorAll('prog');
+      for (const prog of programs) {
+        const ft = prog.getAttribute('ft'); // from time
+        const to = prog.getAttribute('to'); // to time
+        if (ft && to && programTime >= ft && programTime < to) {
+          const titleEl = prog.querySelector('title');
+          const title = titleEl ? titleEl.textContent.trim() : '';
+          cachedProgramInfo = title;
+          lastProgramFetch = now;
+          return title;
+        }
+      }
+    } catch (e) {
+      console.error('[RadikoSkip] Failed to fetch program info:', e);
+    }
+    return '';
+  }
+
   function getCurrentProgramInfo() {
     const hash = location.hash;
     const match = hash.match(/#!?\/(ts|live)\/([A-Z0-9-]+)\/(\d+)?/i);
     const stationId = match ? match[2] : '';
     const programTime = match ? match[3] : '';
 
-    // Try to get program title from page
-    const titleEl = document.querySelector('h1');
-    const programTitle = titleEl ? titleEl.textContent.trim() : '';
-
     return {
       stationId,
       programTime,
-      programTitle,
+      programTitle: '', // Will be fetched async
       url: location.href
     };
   }
 
-  function saveListeningLog(memo) {
+  async function getCurrentProgramInfoAsync() {
+    const info = getCurrentProgramInfo();
+    info.programTitle = await fetchProgramTitle(info.stationId, info.programTime);
+    return info;
+  }
+
+  async function saveListeningLog(memo) {
     const logs = getLogs();
     const now = new Date();
-    const programInfo = getCurrentProgramInfo();
+    const programInfo = await getCurrentProgramInfoAsync();
 
     const entry = {
       id: Date.now(),
@@ -1159,12 +1206,12 @@
     const memoInput = document.getElementById('rsk-memo');
     saveBtn.addEventListener('click', async () => {
       const memo = memoInput.value.trim();
-      const entry = saveListeningLog(memo);
       memoInput.value = '';
 
       saveBtn.textContent = '...';
       saveBtn.disabled = true;
 
+      const entry = await saveListeningLog(memo);
       const success = await saveToGitHub(entry);
 
       saveBtn.textContent = '保存';

@@ -86,8 +86,8 @@
         content = `# ${programDate.getFullYear()}年${month}月\n\n`;
       }
 
-      // Add day section if needed
-      const dayHeader = `## ${month}/${day} (${dayOfWeek})`;
+      // Add day section if needed (format: ## 2/11 for anchor link compatibility)
+      const dayHeader = `## ${month}/${day}`;
       if (!content.includes(dayHeader)) {
         content += `${dayHeader}\n\n`;
       }

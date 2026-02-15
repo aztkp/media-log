@@ -181,24 +181,26 @@
         }
 
         // Update the day cell with program title
+        // Format: [11](link)<br>・番組1<br>・番組2
         const linkPath = `${linkPrefix}${yearMonth}.md#${month}${day}`;
+        const escapedLinkPath = linkPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         // Check if already has a link for this day
-        if (content.includes(`[${dayStr}`) && content.includes(linkPath)) {
-          // Update existing link - add program if not present
-          const linkRegex = new RegExp(`\\[${dayStr}([^\\]]*)\\]\\(${linkPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g');
-          const match = linkRegex.exec(content);
+        if (content.includes(`[${dayStr}]`) && content.includes(linkPath)) {
+          // Add new program to existing cell
+          const cellRegex = new RegExp(`(\\[${dayStr}\\]\\(${escapedLinkPath}\\))([^|]*)( \\|)`, 'g');
+          const match = cellRegex.exec(content);
           if (match) {
-            const existing = match[1].trim();
-            if (!existing.includes(shortTitle)) {
-              const newPrograms = existing ? `${existing}, ${shortTitle}` : ` ${shortTitle}`;
-              content = content.replace(match[0], `[${dayStr}${newPrograms}](${linkPath})`);
+            const existingPrograms = match[2];
+            if (!existingPrograms.includes(shortTitle)) {
+              const newCell = `${match[1]}${existingPrograms}<br>・${shortTitle}${match[3]}`;
+              content = content.replace(match[0], newCell);
             }
           }
         } else {
-          // Add new link
+          // Add new link with first program
           const plainDayRegex = new RegExp(`(\\| )${dayStr}( \\|)`, 'g');
-          content = content.replace(plainDayRegex, `$1[${dayStr} ${shortTitle}](${linkPath})$2`);
+          content = content.replace(plainDayRegex, `$1[${dayStr}](${linkPath})<br>・${shortTitle}$2`);
         }
 
         // Commit updated README

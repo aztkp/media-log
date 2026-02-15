@@ -185,8 +185,8 @@
         const linkPath = `${linkPrefix}${yearMonth}.md#${month}${day}`;
         const escapedLinkPath = linkPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        // Check if already has a link for this day
-        if (content.includes(`[${dayStr}]`) && content.includes(linkPath)) {
+        // Check if already has a link for this day (new format: [11](link))
+        if (content.includes(`[${dayStr}](${linkPath})`)) {
           // Add new program to existing cell
           const cellRegex = new RegExp(`(\\[${dayStr}\\]\\(${escapedLinkPath}\\))([^|]*)( \\|)`, 'g');
           const match = cellRegex.exec(content);
@@ -196,6 +196,16 @@
               const newCell = `${match[1]}${existingPrograms}<br>・${shortTitle}${match[3]}`;
               content = content.replace(match[0], newCell);
             }
+          }
+        } else if (content.includes(`](${linkPath})`)) {
+          // Old format exists: [11 番組名](link) - convert to new format and add program
+          const oldFormatRegex = new RegExp(`\\[${dayStr}[^\\]]*\\]\\(${escapedLinkPath}\\)([^|]*)( \\|)`, 'g');
+          const match = oldFormatRegex.exec(content);
+          if (match) {
+            const existingAfterLink = match[1];
+            // Extract existing programs from old format and after link
+            const newCell = `[${dayStr}](${linkPath})${existingAfterLink}<br>・${shortTitle}${match[2]}`;
+            content = content.replace(match[0], newCell);
           }
         } else {
           // Add new link with first program

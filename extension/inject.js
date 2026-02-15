@@ -137,85 +137,86 @@
     const year = programDate.getFullYear();
     const month = programDate.getMonth() + 1;
     const day = programDate.getDate();
-    const readmePath = 'logs/README.md';
+    const yearMonth = `${year}-${pad(month)}`;
+    const dayStr = String(day);
 
-    try {
-      // Get current README
-      const getRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${readmePath}`, {
-        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-      });
+    // Update both logs/README.md and root README.md
+    const updates = [
+      { path: 'logs/README.md', linkPrefix: '' },
+      { path: 'README.md', linkPrefix: 'logs/' }
+    ];
 
-      let content, sha;
-      if (getRes.ok) {
+    for (const { path, linkPrefix } of updates) {
+      try {
+        const getRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`, {
+          headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+
+        if (!getRes.ok) continue;
+
         const data = await getRes.json();
-        sha = data.sha;
-        content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
-      } else {
-        content = '# Radiko 聴取ログ\n\n';
-      }
+        let content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+        const sha = data.sha;
 
-      // Check if this month's calendar exists
-      const monthHeader = `## ${year}年${month}月`;
-      if (!content.includes(monthHeader)) {
-        // Generate new calendar for this month
-        const cal = generateCalendar(year, month);
-        // Insert after title
-        const insertPos = content.indexOf('\n\n') + 2;
-        content = content.slice(0, insertPos) + monthHeader + '\n\n' + cal + '\n\n---\n\n' + content.slice(insertPos);
-      }
+        // Check if this month's calendar exists
+        const monthHeader = `## ${year}年${month}月`;
+        const calendarSection = path === 'README.md' ? '## 聴取カレンダー' : null;
 
-      // Update the day cell with station info
-      const yearMonth = `${year}-${pad(month)}`;
-      const dayStr = String(day);
-
-      // Pattern to find the day cell (handles both linked and unlinked)
-      // Day cell could be: "| 11 |" or "| [11 TBS](link) |" or "| [11](link) TBS |"
-      const cellPatterns = [
-        // Already has link with content: [11 XXX](...)
-        new RegExp(`\\[${dayStr}[^\\]]*\\]\\(${yearMonth}\\.md#${month}${day}\\)`, 'g'),
-        // Plain day number
-        new RegExp(`\\| ${dayStr} \\|`, 'g'),
-        // Day at end of row
-        new RegExp(`\\| ${dayStr} \\|$`, 'gm')
-      ];
-
-      // Check if already has this station
-      if (content.includes(`[${dayStr}`) && content.includes(`${yearMonth}.md#${month}${day}`)) {
-        // Update existing link - add station if not present
-        const linkRegex = new RegExp(`\\[${dayStr}([^\\]]*)\\]\\(${yearMonth}\\.md#${month}${day}\\)`, 'g');
-        const match = linkRegex.exec(content);
-        if (match) {
-          const existing = match[1].trim();
-          if (!existing.includes(stationId)) {
-            const newStations = existing ? `${existing},${stationId}` : ` ${stationId}`;
-            content = content.replace(match[0], `[${dayStr}${newStations}](${yearMonth}.md#${month}${day})`);
+        if (!content.includes(monthHeader)) {
+          // Generate new calendar for this month
+          const cal = generateCalendar(year, month);
+          if (calendarSection && content.includes(calendarSection)) {
+            // Insert after calendar header
+            const idx = content.indexOf(calendarSection);
+            const insertPos = content.indexOf('\n\n', idx) + 2;
+            content = content.slice(0, insertPos) + `### ${year}年${month}月\n\n` + cal + '\n\n' + content.slice(insertPos);
+          } else if (!calendarSection) {
+            // logs/README.md - insert after title
+            const insertPos = content.indexOf('\n\n') + 2;
+            content = content.slice(0, insertPos) + monthHeader + '\n\n' + cal + '\n\n---\n\n' + content.slice(insertPos);
           }
         }
-      } else {
-        // Add new link
-        const plainDayRegex = new RegExp(`(\\| )${dayStr}( \\|)`, 'g');
-        content = content.replace(plainDayRegex, `$1[${dayStr} ${stationId}](${yearMonth}.md#${month}${day})$2`);
+
+        // Update the day cell with station info
+        const linkPath = `${linkPrefix}${yearMonth}.md#${month}${day}`;
+
+        // Check if already has this station
+        if (content.includes(`[${dayStr}`) && content.includes(linkPath)) {
+          // Update existing link - add station if not present
+          const linkRegex = new RegExp(`\\[${dayStr}([^\\]]*)\\]\\(${linkPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g');
+          const match = linkRegex.exec(content);
+          if (match) {
+            const existing = match[1].trim();
+            if (!existing.includes(stationId)) {
+              const newStations = existing ? `${existing},${stationId}` : ` ${stationId}`;
+              content = content.replace(match[0], `[${dayStr}${newStations}](${linkPath})`);
+            }
+          }
+        } else {
+          // Add new link
+          const plainDayRegex = new RegExp(`(\\| )${dayStr}( \\|)`, 'g');
+          content = content.replace(plainDayRegex, `$1[${dayStr} ${stationId}](${linkPath})$2`);
+        }
+
+        // Commit updated README
+        await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `📅 Update calendar: ${month}/${day} ${stationId}`,
+            content: btoa(unescape(encodeURIComponent(content))),
+            sha: sha
+          })
+        });
+      } catch (e) {
+        console.error('[RadikoSkip] Calendar update error for', path, ':', e);
       }
-
-      // Commit updated README
-      const putRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${readmePath}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: `📅 Update calendar: ${month}/${day} ${stationId}`,
-          content: btoa(unescape(encodeURIComponent(content))),
-          sha: sha
-        })
-      });
-
-      return putRes.ok;
-    } catch (e) {
-      console.error('[RadikoSkip] Calendar update error:', e);
-      return false;
     }
+
+    return true;
   }
 
   function generateCalendar(year, month) {

@@ -846,7 +846,34 @@
     if (!scheduleData) return;
 
     const container = document.getElementById('all-content');
+    const contribContainer = document.getElementById('all-contrib');
     if (!container) return;
+
+    // Render GitHub-style contribution graph for done items
+    if (contribContainer) {
+      const doneItems = scheduleData.watchlist.filter(i => i.status === 'done');
+      const byType = {};
+      doneItems.forEach(item => {
+        const type = item.type || 'movie';
+        if (!byType[type]) byType[type] = [];
+        byType[type].push(item);
+      });
+
+      const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga'];
+      let contribHtml = '<div class="contrib-grid">';
+      categoryOrder.forEach(type => {
+        const items = byType[type] || [];
+        if (items.length === 0) return;
+        contribHtml += `<div class="contrib-row">
+          <div class="contrib-label">${MEDIA_EMOJI[type]} ${MEDIA_NAMES[type]} <span class="contrib-count">${items.length}</span></div>
+          <div class="contrib-squares">
+            ${items.map(() => `<div class="contrib-square ${type}"></div>`).join('')}
+          </div>
+        </div>`;
+      });
+      contribHtml += '</div>';
+      contribContainer.innerHTML = doneItems.length > 0 ? contribHtml : '';
+    }
 
     let items = scheduleData.watchlist.map((item, idx) => ({ ...item, idx }));
 

@@ -112,7 +112,9 @@
     {
       "title": "ストレンジャー・シングス",
       "type": "drama",
-      "status": "watching"
+      "status": "watching",
+      "episodes": 8,
+      "currentEpisode": 1
     },
     {
       "title": "未解決事件は終わらせないといけない",

@@ -699,14 +699,11 @@
     });
   }
 
-  // History
-  let historyViewMode = 'list'; // 'list' or 'shelf'
-
+  // History (Shelf view only)
   function renderHistory() {
     if (!scheduleData) return;
 
     const container = document.getElementById('history-content');
-    const vizContainer = document.getElementById('stack-viz');
     if (!container) return;
 
     const doneItems = scheduleData.watchlist
@@ -716,102 +713,21 @@
 
     if (doneItems.length === 0) {
       container.innerHTML = '<div class="empty">まだ記録がありません</div>';
-      if (vizContainer) vizContainer.innerHTML = '';
       return;
     }
 
-    // Render GitHub-style contribution graph per category (list view only)
-    if (vizContainer && historyViewMode === 'list') {
-      const byType = {};
-      doneItems.forEach(item => {
-        const type = item.type || 'movie';
-        if (!byType[type]) byType[type] = [];
-        byType[type].push(item);
-      });
-
-      const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga'];
-
-      let html = '<div class="contrib-grid">';
-      categoryOrder.forEach(type => {
-        const items = byType[type] || [];
-        if (items.length === 0) return;
-
-        html += `<div class="contrib-row">
-          <div class="contrib-label">${MEDIA_EMOJI[type]} ${MEDIA_NAMES[type]} <span class="contrib-count">${items.length}</span></div>
-          <div class="contrib-squares">
-            ${items.map(() => `<div class="contrib-square ${type}"></div>`).join('')}
-          </div>
-        </div>`;
-      });
-      html += '</div>';
-
-      vizContainer.innerHTML = html;
-    }
-
-    let html = '';
-
-    if (historyViewMode === 'shelf') {
-      // Hide contrib graph in shelf view
-      if (vizContainer) vizContainer.innerHTML = '';
-
-      // Shelf view - simple tile grid
-      html += `<div class="shelf-grid">
-        ${doneItems.map(item => `
-          <div class="shelf-item" data-idx="${item.idx}">
-            ${item.image
-              ? `<img class="shelf-cover" src="${item.image}" alt="${item.title}">`
-              : `<div class="shelf-cover shelf-placeholder"><span class="placeholder-emoji">${MEDIA_EMOJI[item.type]}</span></div>`
-            }
-            <div class="shelf-title">${item.title}</div>
-          </div>
-        `).join('')}
-      </div>`;
-    } else {
-      // List view - grouped by date
-      const grouped = {};
-      doneItems.forEach(item => {
-        const date = formatDate(item.completedAt);
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(item);
-      });
-
-      Object.entries(grouped).forEach(([date, items]) => {
-        html += `<div class="history-group">
-          <div class="history-date">${date}</div>
-          <div class="history-items">
-            ${items.map(item => `
-              <div class="history-item">
-                <div class="history-item-header">
-                  <span class="history-item-emoji">${MEDIA_EMOJI[item.type] || '🎬'}</span>
-                  <span class="history-item-title">${item.title}</span>
-                </div>
-                ${item.note ? `<div class="history-item-note">${item.note}</div>` : ''}
-                <div class="history-item-actions">
-                  <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit-history">✏️</button>
-                  <button class="btn btn-sm" data-idx="${item.idx}" data-action="undo">↩️</button>
-                  <button class="btn btn-sm btn-danger" data-idx="${item.idx}" data-action="delete-history">🗑️</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>`;
-      });
-    }
-
-    container.innerHTML = html;
-
-    // Attach events
-    container.querySelectorAll('[data-action="undo"]').forEach(btn => {
-      btn.addEventListener('click', () => undoComplete(parseInt(btn.dataset.idx)));
-    });
-
-    container.querySelectorAll('[data-action="edit-history"]').forEach(btn => {
-      btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.idx)));
-    });
-
-    container.querySelectorAll('[data-action="delete-history"]').forEach(btn => {
-      btn.addEventListener('click', () => deleteHistoryItem(parseInt(btn.dataset.idx)));
-    });
+    // Shelf view - simple tile grid
+    container.innerHTML = `<div class="shelf-grid">
+      ${doneItems.map(item => `
+        <div class="shelf-item" data-idx="${item.idx}">
+          ${item.image
+            ? `<img class="shelf-cover" src="${item.image}" alt="${item.title}">`
+            : `<div class="shelf-cover shelf-placeholder"><span class="placeholder-emoji">${MEDIA_EMOJI[item.type]}</span></div>`
+          }
+          <div class="shelf-title">${item.title}</div>
+        </div>
+      `).join('')}
+    </div>`;
 
     // Shelf item click to edit
     container.querySelectorAll('.shelf-item').forEach(item => {
@@ -927,21 +843,6 @@
         currentAllFilter = btn.dataset.filter;
         renderAllList();
       });
-    });
-
-    // History view toggle
-    document.getElementById('btn-view-list')?.addEventListener('click', () => {
-      historyViewMode = 'list';
-      document.getElementById('btn-view-list').classList.add('active');
-      document.getElementById('btn-view-shelf').classList.remove('active');
-      renderHistory();
-    });
-
-    document.getElementById('btn-view-shelf')?.addEventListener('click', () => {
-      historyViewMode = 'shelf';
-      document.getElementById('btn-view-shelf').classList.add('active');
-      document.getElementById('btn-view-list').classList.remove('active');
-      renderHistory();
     });
 
     // Quick add

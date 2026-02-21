@@ -715,6 +715,87 @@
       opacity: 0.2;
       cursor: not-allowed;
     }
+
+    .btn-danger {
+      background: var(--danger) !important;
+      opacity: 0.7;
+    }
+
+    .btn-danger:hover {
+      opacity: 1;
+    }
+
+    /* History view toggle */
+    .history-view-toggle {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    /* Shelf view */
+    .shelf-section {
+      margin-bottom: 24px;
+    }
+
+    .shelf-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .shelf-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 12px;
+    }
+
+    .shelf-item {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+
+    .shelf-item:hover {
+      transform: translateY(-2px);
+    }
+
+    .shelf-cover {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+    }
+
+    .shelf-placeholder {
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .shelf-title {
+      font-size: 11px;
+      padding: 6px 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .shelf-actions {
+      display: flex;
+      gap: 4px;
+      padding: 0 8px 8px;
+    }
+
+    .shelf-actions .btn {
+      flex: 1;
+      font-size: 10px;
+      padding: 4px;
+    }
   </style>
 </head>
 <body>
@@ -768,6 +849,10 @@
     <!-- History Tab -->
     <div id="tab-history" class="tab-content">
       <div class="stats-row" id="history-stats"></div>
+      <div class="history-view-toggle">
+        <button class="btn btn-sm active" id="btn-view-list">📋 リスト</button>
+        <button class="btn btn-sm" id="btn-view-shelf">📚 本棚</button>
+      </div>
       <div class="stack-viz" id="stack-viz"></div>
       <div id="history-content"></div>
     </div>

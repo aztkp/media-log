@@ -433,6 +433,9 @@
       padding: 14px;
       margin-bottom: 10px;
       margin-left: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
     }
 
     .history-item-header {
@@ -442,7 +445,20 @@
       margin-bottom: 6px;
     }
 
-    .history-item-emoji { font-size: 20px; }
+    .history-item-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .history-item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-item-emoji { font-size: 16px; }
     .history-item-title { font-size: 14px; font-weight: 500; }
 
     .history-item-note {
@@ -766,6 +782,13 @@
       opacity: 1;
     }
 
+    /* History view toggle */
+    .history-view-toggle {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
     /* Shelf view */
     .shelf-grid {
       display: grid;
@@ -900,9 +923,13 @@
       <div id="backlog-content"></div>
     </div>
 
-    <!-- History Tab (Shelf View) -->
+    <!-- History Tab -->
     <div id="tab-history" class="tab-content">
       <div class="stats-row" id="history-stats"></div>
+      <div class="history-view-toggle">
+        <button class="btn btn-sm active" id="btn-view-list">📋 タイムライン</button>
+        <button class="btn btn-sm" id="btn-view-shelf">📚 本棚</button>
+      </div>
       <div id="history-content"></div>
     </div>
 

@@ -783,7 +783,9 @@
     });
   }
 
-  // History (Shelf view only)
+  // History
+  let historyViewMode = 'list';
+
   function renderHistory() {
     if (!scheduleData) return;
 
@@ -800,22 +802,68 @@
       return;
     }
 
-    // Shelf view - simple tile grid
-    container.innerHTML = `<div class="shelf-grid">
-      ${doneItems.map(item => `
-        <div class="shelf-item" data-idx="${item.idx}">
-          ${item.image
-            ? `<img class="shelf-cover" src="${item.image}" alt="${item.title}">`
-            : `<div class="shelf-cover shelf-placeholder"><span class="placeholder-emoji">${MEDIA_EMOJI[item.type]}</span></div>`
-          }
-          <div class="shelf-title">${item.title}</div>
-        </div>
-      `).join('')}
-    </div>`;
+    let html = '';
 
-    // Shelf item click to edit
+    if (historyViewMode === 'shelf') {
+      // Shelf view - simple tile grid
+      html = `<div class="shelf-grid">
+        ${doneItems.map(item => `
+          <div class="shelf-item" data-idx="${item.idx}">
+            ${item.image
+              ? `<img class="shelf-cover" src="${item.image}" alt="${item.title}">`
+              : `<div class="shelf-cover shelf-placeholder"><span class="placeholder-emoji">${MEDIA_EMOJI[item.type]}</span></div>`
+            }
+            <div class="shelf-title">${item.title}</div>
+          </div>
+        `).join('')}
+      </div>`;
+    } else {
+      // Timeline view - grouped by date
+      const grouped = {};
+      doneItems.forEach(item => {
+        const date = formatDate(item.completedAt);
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(item);
+      });
+
+      Object.entries(grouped).forEach(([date, items]) => {
+        html += `<div class="history-group">
+          <div class="history-date">${date}</div>
+          <div class="history-items">
+            ${items.map(item => `
+              <div class="history-item">
+                ${item.image ? `<img src="${item.image}" class="history-item-img">` : ''}
+                <div class="history-item-body">
+                  <div class="history-item-header">
+                    <span class="history-item-emoji">${MEDIA_EMOJI[item.type] || '🎬'}</span>
+                    <span class="history-item-title">${item.title}</span>
+                  </div>
+                  ${item.note ? `<div class="history-item-note">${item.note}</div>` : ''}
+                </div>
+                <div class="history-item-actions">
+                  <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit-history">✏️</button>
+                  <button class="btn btn-sm btn-danger" data-idx="${item.idx}" data-action="delete-history">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      });
+    }
+
+    container.innerHTML = html;
+
+    // Attach events
     container.querySelectorAll('.shelf-item').forEach(item => {
       item.addEventListener('click', () => openEditModal(parseInt(item.dataset.idx)));
+    });
+
+    container.querySelectorAll('[data-action="edit-history"]').forEach(btn => {
+      btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.idx)));
+    });
+
+    container.querySelectorAll('[data-action="delete-history"]').forEach(btn => {
+      btn.addEventListener('click', () => deleteHistoryItem(parseInt(btn.dataset.idx)));
     });
   }
 
@@ -954,6 +1002,21 @@
         currentAllFilter = btn.dataset.filter;
         renderAllList();
       });
+    });
+
+    // History view toggle
+    document.getElementById('btn-view-list')?.addEventListener('click', () => {
+      historyViewMode = 'list';
+      document.getElementById('btn-view-list').classList.add('active');
+      document.getElementById('btn-view-shelf').classList.remove('active');
+      renderHistory();
+    });
+
+    document.getElementById('btn-view-shelf')?.addEventListener('click', () => {
+      historyViewMode = 'shelf';
+      document.getElementById('btn-view-shelf').classList.add('active');
+      document.getElementById('btn-view-list').classList.remove('active');
+      renderHistory();
     });
 
     // Quick add

@@ -129,10 +129,11 @@
       "status": "want"
     },
     {
-      "title": "サイレントヒル",
+      "title": "SILENT HILL f",
       "type": "game",
       "status": "done",
-      "completedAt": "2026-02-21T22:07:31.550Z"
+      "completedAt": "2026-01-10T00:00:00.000Z",
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771711940785.png"
     },
     {
       "title": "スマブラ",

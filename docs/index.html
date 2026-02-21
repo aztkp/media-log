@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Log</title>
+  <style>
+    :root {
+      --bg-primary: #121212;
+      --bg-secondary: #1e1e1e;
+      --bg-tertiary: #2a2a2a;
+      --bg-card: #333;
+      --text-primary: #fff;
+      --text-secondary: #aaa;
+      --text-muted: #666;
+      --accent: #4caf50;
+      --accent-hover: #5cb85c;
+      --danger: #f44336;
+      --warning: #ff9800;
+      --border: #444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      background: var(--bg-tertiary);
+      border: none;
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--bg-card);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Stats Dashboard */
+    .stats-dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stats-card {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .stats-card-title {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .stats-card-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .stats-card-detail {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .stats-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .stats-item {
+      background: var(--bg-primary);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .stats-item-count {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 12px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: var(--text-primary);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: var(--bg-tertiary);
+      border: none;
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .filter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-right: 8px;
+    }
+
+    /* Search */
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      max-width: 400px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Watchlist Grid */
+    .watchlist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .category-section {
+      margin-bottom: 32px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .category-title {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .category-count {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Item Card */
+    .item-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .item-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .item-card.completed {
+      opacity: 0.7;
+    }
+
+    .item-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .item-status-btn {
+      background: var(--bg-card);
+      border: none;
+      color: var(--text-primary);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .item-status-btn:hover {
+      background: var(--accent);
+    }
+
+    .item-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .item-card.completed .item-title {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    .item-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .item-tag {
+      background: var(--bg-tertiary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .item-note {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      background: var(--bg-tertiary);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .item-action-btn {
+      background: var(--bg-tertiary);
+      border: none;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .item-action-btn:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .item-action-btn.danger:hover {
+      background: var(--danger);
+      color: var(--text-primary);
+    }
+
+    /* Add Form */
+    .add-form {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .add-form-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    /* Schedule */
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .schedule-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      .schedule-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .schedule-day {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .schedule-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .schedule-day-name {
+      font-weight: 600;
+    }
+
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .schedule-item-name {
+      flex: 1;
+    }
+
+    .schedule-item-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .schedule-item-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 12px;
+    }
+
+    .schedule-item-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .schedule-add-form {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .schedule-add-form.show {
+      display: block;
+    }
+
+    /* History */
+    .history-timeline {
+      position: relative;
+    }
+
+    .history-date-group {
+      margin-bottom: 24px;
+    }
+
+    .history-date {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 12px;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .history-date::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .history-items {
+      padding-left: 20px;
+      border-left: 2px solid var(--border);
+      margin-left: 4px;
+    }
+
+    .history-item {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      margin-left: 16px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 14px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 1001;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--accent);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--danger);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-title">
+        <span>🎬</span>
+        <span>Media Log</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn" id="btn-refresh">🔄 更新</button>
+        <button class="btn" id="btn-settings">⚙️ 設定</button>
+      </div>
+    </header>
+
+    <!-- Stats Dashboard -->
+    <div class="stats-dashboard" id="stats-dashboard">
+      <div class="stats-card">
+        <div class="stats-card-title">📅 今年の記録</div>
+        <div class="stats-card-value" id="stats-year-total">-</div>
+        <div class="stats-card-detail" id="stats-year-detail">読み込み中...</div>
+        <div class="stats-breakdown" id="stats-year-breakdown"></div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-title">📊 今月の記録</div>
+        <div class="stats-card-value" id="stats-month-total">-</div>
+        <div class="stats-card-detail" id="stats-month-detail">読み込み中...</div>
+        <div class="stats-breakdown" id="stats-month-breakdown"></div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-title">📋 バックログ</div>
+        <div class="stats-card-value" id="stats-backlog-total">-</div>
+        <div class="stats-card-detail" id="stats-backlog-detail">見たい・視聴中のコンテンツ</div>
+        <div class="stats-breakdown" id="stats-backlog-breakdown"></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="watchlist">📋 リスト</button>
+      <button class="tab" data-tab="history">📜 履歴</button>
+      <button class="tab" data-tab="schedule">📅 定期</button>
+      <button class="tab" data-tab="add">➕ 追加</button>
+    </div>
+
+    <!-- Watchlist Tab -->
+    <div id="tab-watchlist" class="tab-content active">
+      <div class="filters">
+        <div>
+          <span class="filter-label">メディア:</span>
+          <div class="filter-group" id="media-filters">
+            <button class="filter-btn active" data-filter="all">全て</button>
+            <button class="filter-btn" data-filter="movie">🎬 映画</button>
+            <button class="filter-btn" data-filter="anime">🎌 アニメ</button>
+            <button class="filter-btn" data-filter="drama">📺 ドラマ</button>
+            <button class="filter-btn" data-filter="game">🎮 ゲーム</button>
+            <button class="filter-btn" data-filter="book">📖 本</button>
+            <button class="filter-btn" data-filter="manga">📚 漫画</button>
+            <button class="filter-btn" data-filter="youtube">▶️ YouTube</button>
+          </div>
+        </div>
+        <div>
+          <span class="filter-label">ステータス:</span>
+          <div class="filter-group" id="status-filters">
+            <button class="filter-btn active" data-status="all">全て</button>
+            <button class="filter-btn" data-status="want">👀 見たい</button>
+            <button class="filter-btn" data-status="watching">📺 視聴中</button>
+            <button class="filter-btn" data-status="done">✓ 完了</button>
+            <button class="filter-btn" data-status="hold">⏸ 保留</button>
+          </div>
+        </div>
+        <div class="search-box">
+          <input type="text" class="search-input" id="search-input" placeholder="🔍 検索...">
+        </div>
+      </div>
+      <div id="watchlist-content" class="loading">読み込み中...</div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="tab-history" class="tab-content">
+      <div id="history-content" class="loading">読み込み中...</div>
+    </div>
+
+    <!-- Schedule Tab -->
+    <div id="tab-schedule" class="tab-content">
+      <div id="schedule-content" class="loading">読み込み中...</div>
+    </div>
+
+    <!-- Add Tab -->
+    <div id="tab-add" class="tab-content">
+      <div class="add-form">
+        <div class="add-form-title">➕ 新しいアイテムを追加</div>
+        <div class="form-row">
+          <div class="form-group" style="flex: 2;">
+            <label class="form-label">タイトル</label>
+            <input type="text" class="form-input" id="add-title" placeholder="作品名を入力">
+          </div>
+          <div class="form-group">
+            <label class="form-label">メディア</label>
+            <select class="form-select" id="add-type">
+              <option value="movie">🎬 映画</option>
+              <option value="anime">🎌 アニメ</option>
+              <option value="drama">📺 ドラマ</option>
+              <option value="game">🎮 ゲーム</option>
+              <option value="book">📖 本</option>
+              <option value="manga">📚 漫画</option>
+              <option value="youtube">▶️ YouTube</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ステータス</label>
+            <select class="form-select" id="add-status">
+              <option value="want">👀 見たい</option>
+              <option value="watching">📺 視聴中</option>
+              <option value="done">✓ 完了</option>
+              <option value="hold">⏸ 保留</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">URL（任意）</label>
+            <input type="text" class="form-input" id="add-url" placeholder="https://...">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">メモ（任意）</label>
+            <textarea class="form-textarea" id="add-note" placeholder="感想やメモ..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <button class="btn btn-primary" id="add-submit" style="margin-left: auto;">追加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">編集</div>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ 設定</div>
+        <button class="modal-close" id="settings-close">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">GitHub Personal Access Token</label>
+        <input type="password" class="form-input" id="settings-token" placeholder="ghp_...">
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+          <a href="https://github.com/settings/tokens/new" target="_blank" style="color: var(--accent);">トークンを作成</a>（repo権限が必要）
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        <button class="btn btn-primary" id="settings-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

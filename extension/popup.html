@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      width: 320px;
+      background: #212121;
+      color: #fff;
+      font-family: 'YouTube Sans', 'Roboto', sans-serif;
+      padding: 16px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .header-icon {
+      font-size: 20px;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 8px;
+    }
+    .tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #888;
+      padding: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      background: #333;
+      color: #fff;
+    }
+    .tab.active {
+      background: #444;
+      color: #fff;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .not-youtube {
+      text-align: center;
+      padding: 24px 0;
+      color: #888;
+    }
+    .video-info {
+      margin-bottom: 16px;
+    }
+    .video-title {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .video-channel {
+      font-size: 12px;
+      color: #aaa;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 4px;
+      display: block;
+    }
+    select, input[type="text"], input[type="date"] {
+      width: 100%;
+      background: #333;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+    select:focus, input:focus {
+      background: #444;
+    }
+    .date-row {
+      display: flex;
+      gap: 8px;
+    }
+    .date-row select {
+      flex: 1;
+    }
+    .date-row input[type="date"] {
+      flex: 1;
+      display: none;
+    }
+    .date-row.show-picker input[type="date"] {
+      display: block;
+    }
+    .date-row.show-picker select {
+      flex: 0 0 auto;
+      width: auto;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-save {
+      flex: 1;
+      background: #cc0000;
+      color: #fff;
+    }
+    .btn-save:hover {
+      background: #ff0000;
+    }
+    .btn-save:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .btn-delete {
+      background: #555;
+      color: #fff;
+      padding: 10px 12px;
+    }
+    .btn-delete:hover {
+      background: #777;
+    }
+    .btn-delete:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 12px;
+      min-height: 16px;
+    }
+    .status.success {
+      color: #4caf50;
+    }
+    .status.error {
+      color: #f44336;
+    }
+    .loading {
+      text-align: center;
+      padding: 24px 0;
+      color: #888;
+    }
+    /* Schedule styles */
+    .schedule-day {
+      margin-bottom: 12px;
+    }
+    .schedule-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #333;
+      margin-bottom: 6px;
+    }
+    .schedule-day-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .schedule-add-btn {
+      background: #444;
+      border: none;
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .schedule-add-btn:hover {
+      background: #555;
+    }
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: #333;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+    .schedule-item-name {
+      flex: 1;
+    }
+    .schedule-item-delete {
+      background: transparent;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+    }
+    .schedule-item-delete:hover {
+      color: #f44336;
+    }
+    .schedule-item-move {
+      background: transparent;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      font-size: 10px;
+      padding: 2px 4px;
+    }
+    .schedule-item-move:hover {
+      color: #4caf50;
+    }
+    .schedule-item-move:disabled {
+      color: #444;
+      cursor: not-allowed;
+    }
+    .schedule-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .schedule-empty {
+      font-size: 11px;
+      color: #666;
+      padding: 4px 0;
+    }
+    .add-form {
+      display: none;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .add-form.show {
+      display: flex;
+    }
+    .add-form input {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+    .add-form select {
+      width: auto;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+    .add-form button {
+      background: #4caf50;
+      border: none;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .schedule-status {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 12px;
+      min-height: 16px;
+    }
+    /* Watchlist styles */
+    .watchlist-add-form {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #333;
+    }
+    .watchlist-input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .watchlist-select {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .watchlist-add-btn {
+      background: #4caf50;
+      border: none;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .watchlist-add-btn:hover {
+      background: #5cb85c;
+    }
+    .watchlist-category {
+      margin-bottom: 12px;
+    }
+    .watchlist-category-header {
+      font-size: 12px;
+      font-weight: 500;
+      color: #aaa;
+      padding: 4px 0;
+      border-bottom: 1px solid #333;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .watchlist-category-count {
+      font-size: 10px;
+      color: #666;
+    }
+    .watchlist-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: #333;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+    .watchlist-item.completed {
+      opacity: 0.6;
+    }
+    .watchlist-item.completed .watchlist-item-title {
+      text-decoration: line-through;
+    }
+    .watchlist-item-title {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .watchlist-item-status {
+      background: #444;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      min-width: 24px;
+    }
+    .watchlist-item-status:hover {
+      background: #555;
+    }
+    .watchlist-stats {
+      background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: #ccc;
+    }
+    .watchlist-stats-year {
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .watchlist-stats-items {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .watchlist-stats-item {
+      color: #4caf50;
+    }
+    .watchlist-filters {
+      margin-bottom: 12px;
+    }
+    .watchlist-filter {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .status-btn {
+      background: #333;
+      border: none;
+      color: #888;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+    .status-btn:hover {
+      background: #444;
+      color: #fff;
+    }
+    .status-btn.active {
+      background: #666;
+      color: #fff;
+    }
+    .filter-btn {
+      background: #333;
+      border: none;
+      color: #888;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .filter-btn:hover {
+      background: #444;
+      color: #fff;
+    }
+    .filter-btn.active {
+      background: #4caf50;
+      color: #fff;
+    }
+    .watchlist-item-note {
+      font-size: 10px;
+      color: #888;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="header-icon">🎬</span>
+    <span class="header-title">Media Log</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="record">📝 記録</button>
+    <button class="tab" data-tab="watchlist">👀 見たい</button>
+    <button class="tab" data-tab="schedule">📅 定期</button>
+  </div>
+
+  <!-- Record Tab -->
+  <div id="tab-record" class="tab-content active">
+    <div id="loading" class="loading">読み込み中...</div>
+
+    <div id="not-youtube" class="not-youtube" style="display: none;">
+      YouTubeの動画ページで使用してください
+    </div>
+
+    <div id="content" style="display: none;">
+      <div class="video-info">
+        <div id="video-title" class="video-title"></div>
+        <div id="video-channel" class="video-channel"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">メディア種類</label>
+        <select id="media-type">
+          <option value="radio">📻 ラジオ</option>
+          <option value="tv">📺 テレビ</option>
+          <option value="movie">🎬 映画</option>
+          <option value="anime">🎌 アニメ</option>
+          <option value="drama">📺 ドラマ</option>
+          <option value="game">🎮 ゲーム</option>
+          <option value="book">📖 本</option>
+          <option value="manga">📚 漫画</option>
+          <option value="youtube">▶️ YouTube</option>
+          <option value="streaming">🎧 配信</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">記録日</label>
+        <div id="date-row" class="date-row">
+          <select id="date-select">
+            <option value="today">今日</option>
+            <option value="publish" disabled>投稿日</option>
+            <option value="custom">日付を選択...</option>
+          </select>
+          <input type="date" id="date-picker">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">メモ（任意）</label>
+        <input type="text" id="memo" placeholder="メモを入力">
+      </div>
+
+      <div class="btn-row">
+        <button id="btn-save" class="btn btn-save">📻 記録</button>
+        <button id="btn-watchlist" class="btn btn-delete" title="見たいリストに追加">👀</button>
+        <button id="btn-delete" class="btn btn-delete" title="直前のエントリを削除">🗑️</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <!-- Watchlist Tab -->
+  <div id="tab-watchlist" class="tab-content">
+    <div id="watchlist-loading" class="loading">読み込み中...</div>
+    <div id="watchlist-content" style="display: none;">
+      <div class="watchlist-add-form">
+        <input type="text" id="watchlist-title" placeholder="タイトル" class="watchlist-input">
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <select id="watchlist-type" class="watchlist-select">
+            <option value="movie">🎬 映画</option>
+            <option value="anime">🎌 アニメ</option>
+            <option value="drama">📺 ドラマ</option>
+            <option value="game">🎮 ゲーム</option>
+            <option value="book">📖 本</option>
+            <option value="manga">📚 漫画</option>
+            <option value="youtube">▶️ YouTube</option>
+          </select>
+          <button id="watchlist-add-btn" class="watchlist-add-btn">+ 追加</button>
+        </div>
+      </div>
+      <div id="watchlist-stats" class="watchlist-stats"></div>
+      <div class="watchlist-filters">
+        <div class="watchlist-filter">
+          <button class="filter-btn active" data-filter="all">全て</button>
+          <button class="filter-btn" data-filter="movie">🎬</button>
+          <button class="filter-btn" data-filter="anime">🎌</button>
+          <button class="filter-btn" data-filter="drama">📺</button>
+          <button class="filter-btn" data-filter="game">🎮</button>
+          <button class="filter-btn" data-filter="book">📖</button>
+          <button class="filter-btn" data-filter="manga">📚</button>
+          <button class="filter-btn" data-filter="youtube">▶️</button>
+        </div>
+        <div class="watchlist-filter">
+          <button class="status-btn active" data-status="all">全て</button>
+          <button class="status-btn" data-status="watching">📺中</button>
+          <button class="status-btn" data-status="want">👀</button>
+          <button class="status-btn" data-status="done">✓</button>
+          <button class="status-btn" data-status="hold">⏸</button>
+        </div>
+      </div>
+      <div id="watchlist-categories"></div>
+    </div>
+    <div id="watchlist-status" class="schedule-status"></div>
+  </div>
+
+  <!-- Schedule Tab -->
+  <div id="tab-schedule" class="tab-content">
+    <div id="schedule-loading" class="loading">読み込み中...</div>
+    <div id="schedule-content" style="display: none;"></div>
+    <div id="schedule-status" class="schedule-status"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,14 +1,29 @@
 {
   "manifest_version": 3,
-  "name": "Radiko Skip",
-  "version": "1.0.0",
-  "description": "radikoでスキップ機能を追加",
+  "name": "Media Log",
+  "version": "2.0.0",
+  "description": "エンタメ視聴記録（ラジオ・テレビ・映画・配信）",
   "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["https://radiko.jp/*"],
+  "host_permissions": ["https://radiko.jp/*", "https://www.youtube.com/*", "https://stand.fm/*"],
+  "action": {
+    "default_title": "Radio Log",
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
       "matches": ["https://radiko.jp/*"],
       "js": ["inject.js"],
+      "run_at": "document_end",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["youtube-inject.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://stand.fm/*"],
+      "js": ["stand-fm-inject.js"],
       "run_at": "document_end",
       "world": "MAIN"
     }

@@ -11,7 +11,7 @@
   // ===== Logging Functions =====
   const STORAGE_KEY = 'radiko_skip_logs';
   const GITHUB_TOKEN_KEY = 'radiko_github_token';
-  const GITHUB_REPO = 'aztkp/my-radiko';
+  const GITHUB_REPO = 'aztkp/media-log';
 
   function getLogs() {
     try {

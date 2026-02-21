@@ -267,6 +267,8 @@
   }
 
   // Backlog
+  let editingBacklog = false;
+
   function renderBacklog() {
     if (!scheduleData) return;
 
@@ -301,8 +303,8 @@
       html += `
         <div class="priority-section">
           <div class="section-title">📺 視聴中・優先</div>
-          <div class="category-items">
-            ${watching.map(item => renderBacklogItem(item, true)).join('')}
+          <div class="category-items" data-category="watching">
+            ${watching.map((item, i) => renderBacklogItem(item, true, i, watching.length)).join('')}
           </div>
         </div>
       `;
@@ -321,8 +323,8 @@
             <span class="category-name">${MEDIA_NAMES[type]}</span>
             <span class="category-count">${typeItems.length}件</span>
           </div>
-          <div class="category-items">
-            ${typeItems.map(item => renderBacklogItem(item, false)).join('')}
+          <div class="category-items" data-category="${type}">
+            ${typeItems.map((item, i) => renderBacklogItem(item, false, i, typeItems.length)).join('')}
           </div>
         </div>
       `;
@@ -332,7 +334,10 @@
     attachItemEvents(container);
   }
 
-  function renderBacklogItem(item, isWatching) {
+  function renderBacklogItem(item, isWatching, indexInCategory, categoryLength) {
+    const progressText = item.episodes ? `${item.currentEpisode || 0}/${item.episodes}話` : '';
+    const progressPct = item.episodes ? Math.round((item.currentEpisode || 0) / item.episodes * 100) : 0;
+
     return `
       <div class="backlog-item ${isWatching ? 'watching' : ''}">
         <button class="backlog-item-status" data-idx="${item.idx}" title="ステータス変更">
@@ -340,9 +345,18 @@
         </button>
         <div class="backlog-item-content">
           <div class="backlog-item-title">${item.title}</div>
-          ${!isWatching ? '' : `<div class="backlog-item-meta">${MEDIA_EMOJI[item.type]} ${MEDIA_NAMES[item.type] || ''}</div>`}
+          <div class="backlog-item-meta">
+            ${isWatching ? `${MEDIA_EMOJI[item.type]} ${MEDIA_NAMES[item.type] || ''}` : ''}
+            ${progressText ? `<span class="progress-text">${progressText}</span>` : ''}
+          </div>
+          ${item.episodes ? `<div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>` : ''}
         </div>
         <div class="backlog-item-actions">
+          ${item.episodes ? `<button class="btn btn-sm btn-progress" data-idx="${item.idx}" data-action="progress" title="進捗+1">+1</button>` : ''}
+          ${editingBacklog ? `
+            <button class="btn btn-sm" data-idx="${item.idx}" data-action="move-up" ${indexInCategory === 0 ? 'disabled' : ''}>▲</button>
+            <button class="btn btn-sm" data-idx="${item.idx}" data-action="move-down" ${indexInCategory === categoryLength - 1 ? 'disabled' : ''}>▼</button>
+          ` : ''}
           <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit">✏️</button>
           <button class="btn btn-sm" data-idx="${item.idx}" data-action="delete">×</button>
         </div>
@@ -362,6 +376,60 @@
     container.querySelectorAll('[data-action="delete"]').forEach(btn => {
       btn.addEventListener('click', () => deleteItem(parseInt(btn.dataset.idx)));
     });
+
+    container.querySelectorAll('[data-action="progress"]').forEach(btn => {
+      btn.addEventListener('click', () => incrementProgress(parseInt(btn.dataset.idx)));
+    });
+
+    container.querySelectorAll('[data-action="move-up"]').forEach(btn => {
+      btn.addEventListener('click', () => moveItem(parseInt(btn.dataset.idx), 'up'));
+    });
+
+    container.querySelectorAll('[data-action="move-down"]').forEach(btn => {
+      btn.addEventListener('click', () => moveItem(parseInt(btn.dataset.idx), 'down'));
+    });
+  }
+
+  async function incrementProgress(idx) {
+    const item = scheduleData.watchlist[idx];
+    if (!item.episodes) return;
+
+    item.currentEpisode = Math.min((item.currentEpisode || 0) + 1, item.episodes);
+
+    if (item.currentEpisode >= item.episodes) {
+      item.status = 'done';
+      item.completedAt = new Date().toISOString();
+      showToast(`「${item.title}」完了！`);
+    }
+
+    await saveData();
+    renderAll();
+  }
+
+  async function moveItem(idx, direction) {
+    const item = scheduleData.watchlist[idx];
+    const status = item.status || 'want';
+    const type = item.type || 'movie';
+
+    // Find items in same category
+    const sameCategory = scheduleData.watchlist
+      .map((it, i) => ({ ...it, idx: i }))
+      .filter(it => (it.status || 'want') === status && (status === 'watching' || (it.type || 'movie') === type));
+
+    const posInCategory = sameCategory.findIndex(it => it.idx === idx);
+    if (posInCategory === -1) return;
+
+    const targetPos = direction === 'up' ? posInCategory - 1 : posInCategory + 1;
+    if (targetPos < 0 || targetPos >= sameCategory.length) return;
+
+    const targetIdx = sameCategory[targetPos].idx;
+
+    // Swap in the original array
+    [scheduleData.watchlist[idx], scheduleData.watchlist[targetIdx]] =
+      [scheduleData.watchlist[targetIdx], scheduleData.watchlist[idx]];
+
+    await saveData();
+    renderAll();
   }
 
   async function cycleStatus(idx) {
@@ -394,6 +462,7 @@
     const content = document.getElementById('modal-content');
 
     const completedDate = item.completedAt ? item.completedAt.split('T')[0] : '';
+    const showEpisodes = ['anime', 'drama', 'tv'].includes(item.type);
 
     content.innerHTML = `
       <div class="form-group">
@@ -417,6 +486,15 @@
           <option value="hold" ${item.status === 'hold' ? 'selected' : ''}>⏸ 保留</option>
         </select>
       </div>
+      <div class="form-group" id="edit-episodes-group" style="${showEpisodes ? '' : 'display:none'}">
+        <label class="form-label">話数（連続ものの場合）</label>
+        <div class="episode-inputs">
+          <input type="number" class="form-input" id="edit-current-ep" value="${item.currentEpisode || 0}" min="0" placeholder="現在">
+          <span class="episode-sep">/</span>
+          <input type="number" class="form-input" id="edit-total-ep" value="${item.episodes || ''}" min="1" placeholder="全話数">
+          <span class="episode-label">話</span>
+        </div>
+      </div>
       <div class="form-group" id="edit-date-group" style="${item.status === 'done' ? '' : 'display:none'}">
         <label class="form-label">完了日</label>
         <input type="date" class="form-input" id="edit-date" value="${completedDate}">
@@ -429,6 +507,11 @@
     `;
 
     modal.classList.add('show');
+
+    document.getElementById('edit-type').addEventListener('change', (e) => {
+      const episodesGroup = document.getElementById('edit-episodes-group');
+      episodesGroup.style.display = ['anime', 'drama', 'tv'].includes(e.target.value) ? '' : 'none';
+    });
 
     document.getElementById('edit-status').addEventListener('change', (e) => {
       const dateGroup = document.getElementById('edit-date-group');
@@ -447,6 +530,17 @@
       item.type = document.getElementById('edit-type').value;
       const newStatus = document.getElementById('edit-status').value;
       item.note = document.getElementById('edit-note').value.trim() || undefined;
+
+      // Episodes
+      const totalEp = parseInt(document.getElementById('edit-total-ep').value) || 0;
+      const currentEp = parseInt(document.getElementById('edit-current-ep').value) || 0;
+      if (totalEp > 0) {
+        item.episodes = totalEp;
+        item.currentEpisode = Math.min(currentEp, totalEp);
+      } else {
+        delete item.episodes;
+        delete item.currentEpisode;
+      }
 
       if (newStatus === 'done') {
         const dateVal = document.getElementById('edit-date').value;
@@ -699,6 +793,15 @@
       btn.textContent = editingWeekly ? '✓ 完了' : '✏️ 編集';
       btn.classList.toggle('btn-primary', editingWeekly);
       renderWeeklyCalendar();
+    });
+
+    // Backlog edit toggle
+    document.getElementById('btn-edit-backlog')?.addEventListener('click', () => {
+      editingBacklog = !editingBacklog;
+      const btn = document.getElementById('btn-edit-backlog');
+      btn.textContent = editingBacklog ? '✓ 完了' : '✏️ 並べ替え';
+      btn.classList.toggle('btn-primary', editingBacklog);
+      renderBacklog();
     });
 
     // Load

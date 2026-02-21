@@ -641,6 +641,63 @@
     .toast.error { border-left: 4px solid var(--danger); }
 
     .empty { text-align: center; padding: 40px; color: var(--text-muted); }
+
+    /* Episode inputs */
+    .episode-inputs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .episode-inputs .form-input {
+      width: 70px;
+      text-align: center;
+    }
+
+    .episode-sep {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .episode-label {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    .progress-text {
+      font-size: 10px;
+      color: var(--accent);
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+
+    .btn-progress {
+      background: var(--accent) !important;
+      color: #fff !important;
+      font-weight: 600;
+    }
+
+    .btn-progress:hover {
+      background: var(--accent-hover) !important;
+    }
   </style>
 </head>
 <body>
@@ -689,6 +746,7 @@
       <div class="stats-row" id="stats-row"></div>
 
       <!-- Backlog -->
+      <div class="section-title" style="margin-bottom:12px;">📋 バックログ <button class="btn btn-sm" id="btn-edit-backlog">✏️ 並べ替え</button></div>
       <div id="backlog-content"></div>
     </div>
 

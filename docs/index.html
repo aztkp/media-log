@@ -196,6 +196,46 @@
       text-overflow: ellipsis;
     }
 
+    .day-show-img {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      object-fit: cover;
+    }
+
+    .day-record-btn {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .day-show:hover .day-record-btn {
+      opacity: 1;
+    }
+
+    .day-edit-btn {
+      background: var(--bg-tertiary);
+      border: none;
+      color: var(--text-secondary);
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
+    .day-edit-btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
     .day-show-actions {
       display: flex;
       gap: 2px;

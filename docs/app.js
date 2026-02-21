@@ -222,31 +222,45 @@
         </div>
         ${shows.length === 0 ? '<div class="day-empty">-</div>' : ''}
         ${shows.map((s, i) => `
-          <div class="day-show">
-            <span>${MEDIA_EMOJI[s.type] || '📻'}</span>
+          <div class="day-show ${s.image ? 'has-image' : ''}">
+            ${s.image ? `<img src="${s.image}" class="day-show-img">` : `<span>${MEDIA_EMOJI[s.type] || '📻'}</span>`}
             <span class="day-show-name">${s.name}</span>
             ${editingWeekly ? `
               <span class="day-show-actions">
+                <button class="day-edit-btn" data-day="${day}" data-idx="${i}" title="編集">✏️</button>
                 <button class="day-move-btn" data-day="${day}" data-idx="${i}" data-dir="up" ${i === 0 ? 'disabled' : ''}>▲</button>
                 <button class="day-move-btn" data-day="${day}" data-idx="${i}" data-dir="down" ${i === shows.length - 1 ? 'disabled' : ''}>▼</button>
                 <button class="day-del-btn" data-day="${day}" data-idx="${i}">×</button>
               </span>
-            ` : ''}
+            ` : `
+              <button class="day-record-btn" data-day="${day}" data-idx="${i}" title="記録">✓</button>
+            `}
           </div>
         `).join('')}
       </div>`;
     });
 
     container.innerHTML = html;
-
-    if (editingWeekly) {
-      attachWeeklyEvents(container);
-    }
+    attachWeeklyEvents(container);
   }
 
   function attachWeeklyEvents(container) {
+    // Record button (non-edit mode)
+    container.querySelectorAll('.day-record-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        recordRadioShow(btn.dataset.day, parseInt(btn.dataset.idx));
+      });
+    });
+
+    if (!editingWeekly) return;
+
     container.querySelectorAll('.day-add-btn').forEach(btn => {
       btn.addEventListener('click', () => openAddRadioModal(btn.dataset.day));
+    });
+
+    container.querySelectorAll('.day-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => openEditRadioModal(btn.dataset.day, parseInt(btn.dataset.idx)));
     });
 
     container.querySelectorAll('.day-move-btn').forEach(btn => {
@@ -276,6 +290,76 @@
         await saveData();
         renderWeeklyCalendar();
       });
+    });
+  }
+
+  async function recordRadioShow(day, idx) {
+    const show = scheduleData.weekly[day][idx];
+
+    scheduleData.watchlist.push({
+      title: show.name,
+      type: show.type || 'radio',
+      status: 'done',
+      completedAt: new Date().toISOString(),
+      image: show.image || undefined
+    });
+
+    await saveData();
+    renderAll();
+    showToast(`「${show.name}」を記録しました`);
+  }
+
+  function openEditRadioModal(day, idx) {
+    const show = scheduleData.weekly[day][idx];
+    const modal = document.getElementById('edit-modal');
+    const content = document.getElementById('modal-content');
+
+    content.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">番組名</label>
+        <input type="text" class="form-input" id="edit-radio-name" value="${show.name || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">種類</label>
+        <select class="form-select" id="edit-radio-type">
+          <option value="radio" ${show.type === 'radio' ? 'selected' : ''}>📻 ラジオ</option>
+          <option value="tv" ${show.type === 'tv' ? 'selected' : ''}>📺 テレビ</option>
+          <option value="streaming" ${show.type === 'streaming' ? 'selected' : ''}>🎧 配信</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">画像</label>
+        <div class="image-upload-area">
+          ${show.image ? `<img src="${show.image}" class="image-preview" id="image-preview">` : '<div class="image-placeholder" id="image-preview">クリックで画像を設定</div>'}
+          <input type="file" id="edit-image-file" accept="image/*" style="display:none">
+          <input type="hidden" id="edit-image" value="${show.image || ''}">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="edit-radio-save" style="width:100%;margin-top:12px;">保存</button>
+    `;
+
+    modal.classList.add('show');
+
+    // Image upload handlers
+    const imagePreview = document.getElementById('image-preview');
+    const imageFileInput = document.getElementById('edit-image-file');
+    const imageInput = document.getElementById('edit-image');
+
+    imagePreview?.addEventListener('click', () => imageFileInput.click());
+    imageFileInput?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleImageUpload(file, imagePreview, imageInput);
+    });
+
+    document.getElementById('edit-radio-save').addEventListener('click', async () => {
+      show.name = document.getElementById('edit-radio-name').value.trim();
+      show.type = document.getElementById('edit-radio-type').value;
+      show.image = document.getElementById('edit-image').value || undefined;
+
+      await saveData();
+      modal.classList.remove('show');
+      renderWeeklyCalendar();
+      showToast('番組を更新しました');
     });
   }
 

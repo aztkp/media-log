@@ -52,22 +52,25 @@
       return;
     }
 
+    // Read file as data URL first
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    // Open crop modal
+    const croppedBase64 = await openCropModal(dataUrl);
+    if (!croppedBase64) return;
+
     // Show loading state
     previewEl.outerHTML = '<div class="image-placeholder" id="image-preview">アップロード中...</div>';
     const newPreview = document.getElementById('image-preview');
 
     try {
-      // Read file as base64
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
       // Generate unique filename
-      const ext = file.name.split('.').pop() || 'jpg';
-      const filename = `images/${Date.now()}.${ext}`;
+      const filename = `images/${Date.now()}.jpg`;
 
       // Upload to GitHub
       const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${filename}`, {
@@ -75,13 +78,12 @@
         headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: '📷 Upload image',
-          content: base64
+          content: croppedBase64
         })
       });
 
       if (!res.ok) throw new Error('Upload failed');
 
-      const data = await res.json();
       const imageUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${filename}`;
 
       // Update preview
@@ -94,6 +96,120 @@
       newPreview.outerHTML = '<div class="image-placeholder" id="image-preview">クリックまたはドロップで画像を追加</div>';
       showToast('画像のアップロードに失敗しました', 'error');
     }
+  }
+
+  function openCropModal(dataUrl) {
+    return new Promise((resolve) => {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay show';
+      modal.id = 'crop-modal';
+
+      modal.innerHTML = `
+        <div class="modal" style="max-width:500px;">
+          <div class="modal-header">
+            <div class="modal-title">画像をトリミング</div>
+            <button class="modal-close" id="crop-cancel">&times;</button>
+          </div>
+          <div class="crop-container">
+            <img src="${dataUrl}" id="crop-image">
+            <div class="crop-box" id="crop-box"></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn" id="crop-cancel-btn" style="flex:1;">キャンセル</button>
+            <button class="btn btn-primary" id="crop-confirm" style="flex:1;">切り取り</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      const img = document.getElementById('crop-image');
+      const cropBox = document.getElementById('crop-box');
+      let cropX = 0, cropY = 0, cropSize = 0;
+      let isDragging = false;
+      let startX, startY, startCropX, startCropY;
+
+      img.onload = () => {
+        const rect = img.getBoundingClientRect();
+        cropSize = Math.min(rect.width, rect.height);
+        cropX = (rect.width - cropSize) / 2;
+        cropY = (rect.height - cropSize) / 2;
+        updateCropBox();
+      };
+
+      function updateCropBox() {
+        cropBox.style.width = cropSize + 'px';
+        cropBox.style.height = cropSize + 'px';
+        cropBox.style.left = cropX + 'px';
+        cropBox.style.top = cropY + 'px';
+      }
+
+      cropBox.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startCropX = cropX;
+        startCropY = cropY;
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('mouseup', () => isDragging = false);
+
+      cropBox.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startCropX = cropX;
+        startCropY = cropY;
+        e.preventDefault();
+      });
+
+      document.addEventListener('touchmove', handleMove);
+      document.addEventListener('touchend', () => isDragging = false);
+
+      function handleMove(e) {
+        if (!isDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = img.getBoundingClientRect();
+
+        cropX = Math.max(0, Math.min(rect.width - cropSize, startCropX + (clientX - startX)));
+        cropY = Math.max(0, Math.min(rect.height - cropSize, startCropY + (clientY - startY)));
+        updateCropBox();
+      }
+
+      function cleanup() {
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('touchmove', handleMove);
+        modal.remove();
+      }
+
+      document.getElementById('crop-cancel').onclick = () => { cleanup(); resolve(null); };
+      document.getElementById('crop-cancel-btn').onclick = () => { cleanup(); resolve(null); };
+
+      document.getElementById('crop-confirm').onclick = () => {
+        const rect = img.getBoundingClientRect();
+        const scaleX = img.naturalWidth / rect.width;
+        const scaleY = img.naturalHeight / rect.height;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(
+          img,
+          cropX * scaleX, cropY * scaleY,
+          cropSize * scaleX, cropSize * scaleY,
+          0, 0, 400, 400
+        );
+
+        const base64 = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+        cleanup();
+        resolve(base64);
+      };
+    });
   }
 
   function formatDate(d) {

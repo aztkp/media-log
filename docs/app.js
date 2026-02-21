@@ -720,8 +720,8 @@
       return;
     }
 
-    // Render GitHub-style contribution graph per category
-    if (vizContainer) {
+    // Render GitHub-style contribution graph per category (list view only)
+    if (vizContainer && historyViewMode === 'list') {
       const byType = {};
       doneItems.forEach(item => {
         const type = item.type || 'movie';
@@ -751,6 +751,9 @@
     let html = '';
 
     if (historyViewMode === 'shelf') {
+      // Hide contrib graph in shelf view
+      if (vizContainer) vizContainer.innerHTML = '';
+
       // Shelf view - simple tile grid
       html += `<div class="shelf-grid">
         ${doneItems.map(item => `

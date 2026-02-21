@@ -45,6 +45,57 @@
   function getToken() { return localStorage.getItem(STORAGE_KEY) || ''; }
   function setToken(t) { localStorage.setItem(STORAGE_KEY, t); }
 
+  async function handleImageUpload(file, previewEl, inputEl) {
+    const token = getToken();
+    if (!token) {
+      showToast('トークンが設定されていません', 'error');
+      return;
+    }
+
+    // Show loading state
+    previewEl.outerHTML = '<div class="image-placeholder" id="image-preview">アップロード中...</div>';
+    const newPreview = document.getElementById('image-preview');
+
+    try {
+      // Read file as base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Generate unique filename
+      const ext = file.name.split('.').pop() || 'jpg';
+      const filename = `images/${Date.now()}.${ext}`;
+
+      // Upload to GitHub
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${filename}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: '📷 Upload image',
+          content: base64
+        })
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+
+      const data = await res.json();
+      const imageUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${filename}`;
+
+      // Update preview
+      newPreview.outerHTML = `<img src="${imageUrl}" class="image-preview" id="image-preview">`;
+      inputEl.value = imageUrl;
+      showToast('画像をアップロードしました');
+
+    } catch (e) {
+      console.error('Image upload error:', e);
+      newPreview.outerHTML = '<div class="image-placeholder" id="image-preview">クリックまたはドロップで画像を追加</div>';
+      showToast('画像のアップロードに失敗しました', 'error');
+    }
+  }
+
   function formatDate(d) {
     if (!d) return '';
     const date = new Date(d);
@@ -541,8 +592,13 @@
         <input type="date" class="form-input" id="edit-date" value="${completedDate}">
       </div>
       <div class="form-group">
-        <label class="form-label">画像URL（任意）</label>
-        <input type="url" class="form-input" id="edit-image" value="${item.image || ''}" placeholder="https://...">
+        <label class="form-label">画像</label>
+        <div class="image-upload-area">
+          ${item.image ? `<img src="${item.image}" class="image-preview" id="image-preview">` : '<div class="image-placeholder" id="image-preview">クリックまたはドロップで画像を追加</div>'}
+          <input type="file" id="edit-image-file" accept="image/*" style="display:none">
+          <input type="hidden" id="edit-image" value="${item.image || ''}">
+        </div>
+        ${item.image ? '<button type="button" class="btn btn-sm" id="remove-image" style="margin-top:6px">画像を削除</button>' : ''}
       </div>
       <div class="form-group">
         <label class="form-label">メモ</label>
@@ -556,6 +612,43 @@
     document.getElementById('edit-type').addEventListener('change', (e) => {
       const episodesGroup = document.getElementById('edit-episodes-group');
       episodesGroup.style.display = ['anime', 'drama', 'tv'].includes(e.target.value) ? '' : 'none';
+    });
+
+    // Image upload
+    const imagePreview = document.getElementById('image-preview');
+    const imageFileInput = document.getElementById('edit-image-file');
+    const imageInput = document.getElementById('edit-image');
+
+    imagePreview?.addEventListener('click', () => imageFileInput.click());
+
+    imagePreview?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      imagePreview.classList.add('dragover');
+    });
+
+    imagePreview?.addEventListener('dragleave', () => {
+      imagePreview.classList.remove('dragover');
+    });
+
+    imagePreview?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      imagePreview.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, imagePreview, imageInput);
+      }
+    });
+
+    imageFileInput?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleImageUpload(file, imagePreview, imageInput);
+      }
+    });
+
+    document.getElementById('remove-image')?.addEventListener('click', () => {
+      imageInput.value = '';
+      imagePreview.outerHTML = '<div class="image-placeholder" id="image-preview">クリックまたはドロップで画像を追加</div>';
     });
 
     document.getElementById('edit-status').addEventListener('change', (e) => {

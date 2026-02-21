@@ -7,12 +7,12 @@
 
   const MEDIA_EMOJI = {
     radio: '📻', tv: '📺', movie: '🎬', streaming: '🎧',
-    anime: '🎌', drama: '📺', game: '🎮', book: '📖', manga: '📚', youtube: '▶️'
+    anime: '🎌', drama: '📺', game: '🎮', book: '📖', manga: '📚'
   };
 
   const MEDIA_NAMES = {
     movie: '映画', anime: 'アニメ', drama: 'ドラマ', game: 'ゲーム',
-    book: '本', manga: '漫画', youtube: 'YouTube', radio: 'ラジオ', tv: 'テレビ'
+    book: '本', manga: '漫画', radio: 'ラジオ', tv: 'テレビ'
   };
 
   const STATUS_EMOJI = { want: '👀', watching: '📺', done: '✓', hold: '⏸' };
@@ -267,8 +267,6 @@
   }
 
   // Backlog
-  let editingBacklog = false;
-
   function renderBacklog() {
     if (!scheduleData) return;
 
@@ -311,7 +309,7 @@
     }
 
     // Category sections
-    const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga', 'youtube'];
+    const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga'];
     categoryOrder.forEach(type => {
       const typeItems = grouped[type];
       if (!typeItems || typeItems.length === 0) return;
@@ -353,10 +351,8 @@
         </div>
         <div class="backlog-item-actions">
           ${item.episodes ? `<button class="btn btn-sm btn-progress" data-idx="${item.idx}" data-action="progress" title="進捗+1">+1</button>` : ''}
-          ${editingBacklog ? `
-            <button class="btn btn-sm" data-idx="${item.idx}" data-action="move-up" ${indexInCategory === 0 ? 'disabled' : ''}>▲</button>
-            <button class="btn btn-sm" data-idx="${item.idx}" data-action="move-down" ${indexInCategory === categoryLength - 1 ? 'disabled' : ''}>▼</button>
-          ` : ''}
+          <button class="btn btn-sm btn-move" data-idx="${item.idx}" data-action="move-up" ${indexInCategory === 0 ? 'disabled' : ''}>▲</button>
+          <button class="btn btn-sm btn-move" data-idx="${item.idx}" data-action="move-down" ${indexInCategory === categoryLength - 1 ? 'disabled' : ''}>▼</button>
           <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit">✏️</button>
           <button class="btn btn-sm" data-idx="${item.idx}" data-action="delete">×</button>
         </div>
@@ -588,7 +584,7 @@
         byType[type].push(item);
       });
 
-      const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga', 'youtube'];
+      const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga'];
 
       let html = '<div class="contrib-grid">';
       categoryOrder.forEach(type => {
@@ -795,14 +791,6 @@
       renderWeeklyCalendar();
     });
 
-    // Backlog edit toggle
-    document.getElementById('btn-edit-backlog')?.addEventListener('click', () => {
-      editingBacklog = !editingBacklog;
-      const btn = document.getElementById('btn-edit-backlog');
-      btn.textContent = editingBacklog ? '✓ 完了' : '✏️ 並べ替え';
-      btn.classList.toggle('btn-primary', editingBacklog);
-      renderBacklog();
-    });
 
     // Load
     await loadData();

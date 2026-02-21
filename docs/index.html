@@ -179,17 +179,22 @@
     }
 
     .day-show {
-      font-size: 12px;
-      padding: 6px 8px;
+      font-size: 11px;
+      padding: 4px 6px;
       background: var(--bg-tertiary);
       border-radius: 6px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
-    .day-show-name { flex: 1; }
+    .day-show-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     .day-show-actions {
       display: flex;
@@ -446,7 +451,6 @@
     .stack-segment.game { background: #00bcd4; }
     .stack-segment.book { background: #8bc34a; }
     .stack-segment.manga { background: #ff9800; }
-    .stack-segment.youtube { background: #f44336; }
 
     .stack-legend-item .stack-legend-color.movie { background: #e91e63; }
     .stack-legend-item .stack-legend-color.anime { background: #9c27b0; }
@@ -454,7 +458,6 @@
     .stack-legend-item .stack-legend-color.game { background: #00bcd4; }
     .stack-legend-item .stack-legend-color.book { background: #8bc34a; }
     .stack-legend-item .stack-legend-color.manga { background: #ff9800; }
-    .stack-legend-item .stack-legend-color.youtube { background: #f44336; }
 
     .stack-legend {
       display: flex;
@@ -525,7 +528,6 @@
     .contrib-square.game { background: #00bcd4; }
     .contrib-square.book { background: #8bc34a; }
     .contrib-square.manga { background: #ff9800; }
-    .contrib-square.youtube { background: #f44336; }
 
     /* Stats */
     .stats-row {
@@ -698,6 +700,21 @@
     .btn-progress:hover {
       background: var(--accent-hover) !important;
     }
+
+    .btn-move {
+      opacity: 0.5;
+      font-size: 10px !important;
+      padding: 4px 6px !important;
+    }
+
+    .btn-move:hover {
+      opacity: 1;
+    }
+
+    .btn-move:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -732,7 +749,6 @@
             <option value="game">🎮 ゲーム</option>
             <option value="book">📖 本</option>
             <option value="manga">📚 漫画</option>
-            <option value="youtube">▶️ YouTube</option>
           </select>
           <button class="btn btn-primary" id="quick-add-btn">追加</button>
         </div>
@@ -746,7 +762,6 @@
       <div class="stats-row" id="stats-row"></div>
 
       <!-- Backlog -->
-      <div class="section-title" style="margin-bottom:12px;">📋 バックログ <button class="btn btn-sm" id="btn-edit-backlog">✏️ 並べ替え</button></div>
       <div id="backlog-content"></div>
     </div>
 

@@ -233,6 +233,12 @@
       "type": "book",
       "status": "want",
       "addedAt": "2026-02-22T11:04:22.438Z"
+    },
+    {
+      "title": "ロマンス",
+      "type": "comedy",
+      "status": "want",
+      "addedAt": "2026-02-22T11:08:24.274Z"
     }
   ]
 }

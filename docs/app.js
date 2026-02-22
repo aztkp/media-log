@@ -125,23 +125,28 @@
 
       const img = document.getElementById('crop-image');
       const cropBox = document.getElementById('crop-box');
+      const container = img.parentElement;
       let cropX = 0, cropY = 0, cropSize = 0;
+      let imgOffsetX = 0, imgOffsetY = 0;
       let isDragging = false;
       let startX, startY, startCropX, startCropY;
 
       img.onload = () => {
-        const rect = img.getBoundingClientRect();
-        cropSize = Math.min(rect.width, rect.height);
-        cropX = (rect.width - cropSize) / 2;
-        cropY = (rect.height - cropSize) / 2;
+        const imgRect = img.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        imgOffsetX = imgRect.left - containerRect.left;
+        imgOffsetY = imgRect.top - containerRect.top;
+        cropSize = Math.min(imgRect.width, imgRect.height);
+        cropX = (imgRect.width - cropSize) / 2;
+        cropY = (imgRect.height - cropSize) / 2;
         updateCropBox();
       };
 
       function updateCropBox() {
         cropBox.style.width = cropSize + 'px';
         cropBox.style.height = cropSize + 'px';
-        cropBox.style.left = cropX + 'px';
-        cropBox.style.top = cropY + 'px';
+        cropBox.style.left = (cropX + imgOffsetX) + 'px';
+        cropBox.style.top = (cropY + imgOffsetY) + 'px';
       }
 
       cropBox.addEventListener('mousedown', (e) => {

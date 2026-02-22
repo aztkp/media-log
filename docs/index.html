@@ -140,12 +140,16 @@
 
     .weekly-calendar {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
       margin-bottom: 24px;
     }
 
-    @media (max-width: 450px) {
+    @media (max-width: 600px) {
+      .weekly-calendar { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 400px) {
       .weekly-calendar { grid-template-columns: repeat(2, 1fr); }
     }
 

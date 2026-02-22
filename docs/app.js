@@ -6,7 +6,7 @@
   const STORAGE_KEY = 'media_log_token';
 
   const MEDIA_NAMES = {
-    movie: '映画', anime: 'アニメ', drama: 'ドラマ', tv: 'テレビ',
+    movie: '映画', anime: 'アニメ', drama: 'ドラマ', tv: 'テレビ', comedy: 'お笑い',
     game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信'
   };
 
@@ -634,7 +634,7 @@
     }
 
     // Category sections
-    const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'game', 'book', 'manga'];
+    const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga'];
     categoryOrder.forEach(type => {
       const typeItems = grouped[type];
       if (!typeItems || typeItems.length === 0) return;
@@ -955,7 +955,7 @@
           byType[type].push(item);
         });
 
-        const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'game', 'book', 'manga', 'radio'];
+        const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'radio'];
         let contribHtml = '<div class="contrib-compact">';
         categoryOrder.forEach(type => {
           const items = byType[type] || [];
@@ -1082,7 +1082,7 @@
         byType[type].push(item);
       });
 
-      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'game', 'book', 'manga'];
+      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga'];
       let contribHtml = '<div class="contrib-grid">';
       categoryOrder.forEach(type => {
         const items = byType[type] || [];

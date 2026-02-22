@@ -42,12 +42,7 @@
       }
     ],
     "sat": [],
-    "sun": [
-      {
-        "name": "知らねえ単語",
-        "type": "radio"
-      }
-    ]
+    "sun": []
   },
   "watchlist": [
     {

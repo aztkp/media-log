@@ -242,15 +242,15 @@
       "addedAt": "2026-02-22T11:08:24.274Z"
     },
     {
-      "title": "おきはい",
-      "type": "book",
-      "status": "want"
-    },
-    {
       "title": "舞姫・うたかたの記",
       "type": "book",
       "status": "want",
       "addedAt": "2026-02-22T17:52:42.997Z"
+    },
+    {
+      "title": "おきはい",
+      "type": "book",
+      "status": "want"
     }
   ]
 }

@@ -591,7 +591,7 @@
     }
 
     // Category sections
-    const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga'];
+    const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'game', 'book', 'manga'];
     categoryOrder.forEach(type => {
       const typeItems = grouped[type];
       if (!typeItems || typeItems.length === 0) return;
@@ -900,7 +900,7 @@
       .filter(i => i.status === 'done' && i.completedAt)
       .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
-    // Render compact contrib graph
+    // Render compact GitHub-style contrib graph
     if (contribContainer) {
       if (doneItems.length === 0) {
         contribContainer.innerHTML = '';
@@ -908,15 +908,21 @@
         const byType = {};
         doneItems.forEach(item => {
           const type = item.type || 'movie';
-          byType[type] = (byType[type] || 0) + 1;
+          if (!byType[type]) byType[type] = [];
+          byType[type].push(item);
         });
 
-        const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga', 'radio'];
+        const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'game', 'book', 'manga', 'radio'];
         let contribHtml = '<div class="contrib-compact">';
         categoryOrder.forEach(type => {
-          const count = byType[type] || 0;
-          if (count === 0) return;
-          contribHtml += `<span class="contrib-chip ${type}">${MEDIA_EMOJI[type]} ${count}</span>`;
+          const items = byType[type] || [];
+          if (items.length === 0) return;
+          contribHtml += `<div class="contrib-row-compact">
+            <span class="contrib-label-compact">${MEDIA_EMOJI[type]}</span>
+            <div class="contrib-squares-compact">
+              ${items.map(() => `<div class="contrib-square-sm ${type}"></div>`).join('')}
+            </div>
+          </div>`;
         });
         contribHtml += '</div>';
         contribContainer.innerHTML = contribHtml;
@@ -1033,7 +1039,7 @@
         byType[type].push(item);
       });
 
-      const categoryOrder = ['movie', 'anime', 'drama', 'game', 'book', 'manga'];
+      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'game', 'book', 'manga'];
       let contribHtml = '<div class="contrib-grid">';
       categoryOrder.forEach(type => {
         const items = byType[type] || [];

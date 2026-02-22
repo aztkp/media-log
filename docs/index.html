@@ -545,26 +545,43 @@
 
     .contrib-compact {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      flex-direction: column;
+      gap: 6px;
       margin-bottom: 16px;
     }
 
-    .contrib-chip {
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #fff;
+    .contrib-row-compact {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .contrib-chip.movie { background: #e91e63; }
-    .contrib-chip.anime { background: #9c27b0; }
-    .contrib-chip.drama { background: #3f51b5; }
-    .contrib-chip.game { background: #00bcd4; }
-    .contrib-chip.book { background: #8bc34a; }
-    .contrib-chip.manga { background: #ff9800; }
-    .contrib-chip.radio { background: #607d8b; }
+    .contrib-label-compact {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .contrib-squares-compact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .contrib-square-sm {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    .contrib-square-sm.movie { background: #e91e63; }
+    .contrib-square-sm.anime { background: #9c27b0; }
+    .contrib-square-sm.drama { background: #3f51b5; }
+    .contrib-square-sm.tv { background: #2196f3; }
+    .contrib-square-sm.game { background: #00bcd4; }
+    .contrib-square-sm.book { background: #8bc34a; }
+    .contrib-square-sm.manga { background: #ff9800; }
+    .contrib-square-sm.radio { background: #607d8b; }
 
     .contrib-row {
       background: var(--bg-secondary);
@@ -971,6 +988,7 @@
             <option value="movie">🎬 映画</option>
             <option value="anime">🎌 アニメ</option>
             <option value="drama">📺 ドラマ</option>
+            <option value="tv">📺 テレビ</option>
             <option value="game">🎮 ゲーム</option>
             <option value="book">📖 本</option>
             <option value="manga">📚 漫画</option>

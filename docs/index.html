@@ -583,6 +583,35 @@
     .contrib-square-sm.manga { background: #ff9800; }
     .contrib-square-sm.radio { background: #607d8b; }
 
+    /* Media chip - color + label */
+    .media-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #fff;
+      min-width: 12px;
+      text-align: center;
+    }
+
+    .media-chip:empty {
+      padding: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .media-chip.movie { background: #e91e63; }
+    .media-chip.anime { background: #9c27b0; }
+    .media-chip.drama { background: #3f51b5; }
+    .media-chip.tv { background: #2196f3; }
+    .media-chip.game { background: #00bcd4; }
+    .media-chip.book { background: #8bc34a; }
+    .media-chip.manga { background: #ff9800; }
+    .media-chip.radio { background: #607d8b; }
+    .media-chip.streaming { background: #795548; }
+
     .contrib-row {
       background: var(--bg-secondary);
       border-radius: 8px;
@@ -985,13 +1014,13 @@
         <div class="quick-add-row">
           <input type="text" class="quick-add-input" id="quick-title" placeholder="タイトルを入力して追加...">
           <select class="quick-add-select" id="quick-type">
-            <option value="movie">🎬 映画</option>
-            <option value="anime">🎌 アニメ</option>
-            <option value="drama">📺 ドラマ</option>
-            <option value="tv">📺 テレビ</option>
-            <option value="game">🎮 ゲーム</option>
-            <option value="book">📖 本</option>
-            <option value="manga">📚 漫画</option>
+            <option value="movie">映画</option>
+            <option value="anime">アニメ</option>
+            <option value="drama">ドラマ</option>
+            <option value="tv">テレビ</option>
+            <option value="game">ゲーム</option>
+            <option value="book">本</option>
+            <option value="manga">漫画</option>
           </select>
           <button class="btn btn-primary" id="quick-add-btn">追加</button>
         </div>

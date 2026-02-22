@@ -5,15 +5,15 @@
   const GITHUB_REPO = 'aztkp/media-log';
   const STORAGE_KEY = 'media_log_token';
 
-  const MEDIA_EMOJI = {
-    radio: '📻', tv: '📺', movie: '🎬', streaming: '🎧',
-    anime: '🎌', drama: '📺', game: '🎮', book: '📖', manga: '📚'
+  const MEDIA_NAMES = {
+    movie: '映画', anime: 'アニメ', drama: 'ドラマ', tv: 'テレビ',
+    game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信'
   };
 
-  const MEDIA_NAMES = {
-    movie: '映画', anime: 'アニメ', drama: 'ドラマ', game: 'ゲーム',
-    book: '本', manga: '漫画', radio: 'ラジオ', tv: 'テレビ'
-  };
+  function mediaChip(type, showLabel = true) {
+    const name = MEDIA_NAMES[type] || type;
+    return `<span class="media-chip ${type}">${showLabel ? name : ''}</span>`;
+  }
 
   const STATUS_EMOJI = { want: '☆', watching: '👀', done: '✓', hold: '⏸' };
   const DAY_NAMES = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
@@ -339,7 +339,7 @@
         ${shows.length === 0 ? '<div class="day-empty">-</div>' : ''}
         ${shows.map((s, i) => `
           <div class="day-show ${s.image ? 'has-image' : ''}">
-            ${s.image ? `<img src="${s.image}" class="day-show-img">` : `<span>${MEDIA_EMOJI[s.type] || '📻'}</span>`}
+            ${s.image ? `<img src="${s.image}" class="day-show-img">` : mediaChip(s.type || 'radio', false)}
             <span class="day-show-name">${s.name}</span>
             ${editingWeekly ? `
               <span class="day-show-actions">
@@ -599,7 +599,7 @@
       html += `
         <div class="category-section">
           <div class="category-header">
-            <span class="category-emoji">${MEDIA_EMOJI[type]}</span>
+            ${mediaChip(type, false)}
             <span class="category-name">${MEDIA_NAMES[type]}</span>
             <span class="category-count">${typeItems.length}件</span>
           </div>
@@ -626,7 +626,7 @@
         <div class="backlog-item-content">
           <div class="backlog-item-title">${item.title}</div>
           <div class="backlog-item-meta">
-            ${isWatching ? `${MEDIA_EMOJI[item.type]} ${MEDIA_NAMES[item.type] || ''}` : ''}
+            ${isWatching ? mediaChip(item.type) : ''}
             ${progressText ? `<span class="progress-text">${progressText}</span>` : ''}
           </div>
           ${item.episodes ? `<div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>` : ''}
@@ -751,7 +751,7 @@
         <label class="form-label">メディア</label>
         <select class="form-select" id="edit-type">
           ${Object.entries(MEDIA_NAMES).map(([k, v]) =>
-            `<option value="${k}" ${item.type === k ? 'selected' : ''}>${MEDIA_EMOJI[k]} ${v}</option>`
+            `<option value="${k}" ${item.type === k ? 'selected' : ''}>${v}</option>`
           ).join('')}
         </select>
       </div>
@@ -918,7 +918,7 @@
           const items = byType[type] || [];
           if (items.length === 0) return;
           contribHtml += `<div class="contrib-row-compact">
-            <span class="contrib-label-compact">${MEDIA_EMOJI[type]}</span>
+            ${mediaChip(type, false)}
             <div class="contrib-squares-compact">
               ${items.map(() => `<div class="contrib-square-sm ${type}"></div>`).join('')}
             </div>
@@ -943,7 +943,7 @@
           <div class="shelf-item" data-idx="${item.idx}">
             ${item.image
               ? `<img class="shelf-cover" src="${item.image}" alt="${item.title}">`
-              : `<div class="shelf-cover shelf-placeholder"><span class="placeholder-emoji">${MEDIA_EMOJI[item.type]}</span></div>`
+              : `<div class="shelf-cover shelf-placeholder">${mediaChip(item.type)}</div>`
             }
             <div class="shelf-title">${item.title}</div>
           </div>
@@ -967,7 +967,7 @@
                 ${item.image ? `<img src="${item.image}" class="history-item-img">` : ''}
                 <div class="history-item-body">
                   <div class="history-item-header">
-                    <span class="history-item-emoji">${MEDIA_EMOJI[item.type] || '🎬'}</span>
+                    ${mediaChip(item.type, false)}
                     <span class="history-item-title">${item.title}</span>
                   </div>
                   ${item.note ? `<div class="history-item-note">${item.note}</div>` : ''}
@@ -1045,7 +1045,7 @@
         const items = byType[type] || [];
         if (items.length === 0) return;
         contribHtml += `<div class="contrib-row">
-          <div class="contrib-label">${MEDIA_EMOJI[type]} ${MEDIA_NAMES[type]} <span class="contrib-count">${items.length}</span></div>
+          <div class="contrib-label">${mediaChip(type)} <span class="contrib-count">${items.length}</span></div>
           <div class="contrib-squares">
             ${items.map(() => `<div class="contrib-square ${type}"></div>`).join('')}
           </div>
@@ -1073,7 +1073,7 @@
         </button>
         <div class="backlog-item-content">
           <div class="backlog-item-title">${item.title}</div>
-          <div class="backlog-item-meta">${MEDIA_EMOJI[item.type]} ${MEDIA_NAMES[item.type] || ''}</div>
+          <div class="backlog-item-meta">${mediaChip(item.type)}</div>
         </div>
         <div class="backlog-item-actions">
           <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit">✏️</button>

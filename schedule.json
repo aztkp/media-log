@@ -198,9 +198,10 @@
       "status": "watching"
     },
     {
-      "title": "おきはい",
+      "title": "歯車",
       "type": "book",
-      "status": "want"
+      "status": "want",
+      "addedAt": "2026-02-22T11:04:22.438Z"
     },
     {
       "title": "ペルソナ",
@@ -229,10 +230,9 @@
       "note": "ヤーレンズの昼のロケに文句言ってるだけ\n沖縄の海は面白くない"
     },
     {
-      "title": "歯車",
+      "title": "おきはい",
       "type": "book",
-      "status": "want",
-      "addedAt": "2026-02-22T11:04:22.438Z"
+      "status": "want"
     },
     {
       "title": "ロマンス",

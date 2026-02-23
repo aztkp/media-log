@@ -270,6 +270,13 @@
       "type": "drama",
       "status": "want",
       "addedAt": "2026-02-22T17:54:27.591Z"
+    },
+    {
+      "title": "チャンスの時間",
+      "type": "tv",
+      "status": "done",
+      "completedAt": "2026-02-23T06:19:44.173Z",
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771827574998.jpg"
     }
   ]
 }

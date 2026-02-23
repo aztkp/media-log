@@ -452,20 +452,53 @@
     });
   }
 
-  async function recordRadioShow(day, idx) {
+  function recordRadioShow(day, idx) {
     const show = scheduleData.weekly[day][idx];
+    const modal = document.getElementById('edit-modal');
+    const content = document.getElementById('modal-content');
 
-    scheduleData.watchlist.push({
-      title: show.name,
-      type: show.type || 'radio',
-      status: 'done',
-      completedAt: new Date().toISOString(),
-      image: show.image || undefined
+    content.innerHTML = `
+      <div class="episode-record-header">
+        <span class="episode-record-title">記録を追加</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">タイトル</label>
+        <input type="text" class="form-input" id="record-title" value="${show.name}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メモ（任意）</label>
+        <textarea class="form-textarea" id="record-note" placeholder="感想やメモを入力..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn" id="record-cancel" style="flex:1;">キャンセル</button>
+        <button class="btn btn-primary" id="record-save" style="flex:1;">記録</button>
+      </div>
+    `;
+
+    modal.classList.add('show');
+
+    document.getElementById('record-cancel').addEventListener('click', () => {
+      modal.classList.remove('show');
     });
 
-    await saveData();
-    renderAll();
-    showToast(`「${show.name}」を記録しました`);
+    document.getElementById('record-save').addEventListener('click', async () => {
+      const title = document.getElementById('record-title').value.trim() || show.name;
+      const note = document.getElementById('record-note').value.trim();
+
+      scheduleData.watchlist.push({
+        title,
+        type: show.type || 'radio',
+        status: 'done',
+        completedAt: new Date().toISOString(),
+        image: show.image || undefined,
+        note: note || undefined
+      });
+
+      await saveData();
+      modal.classList.remove('show');
+      renderAll();
+      showToast(`「${title}」を記録しました`);
+    });
   }
 
   function openEditRadioModal(day, idx) {

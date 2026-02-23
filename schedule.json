@@ -26,12 +26,12 @@
         "type": "radio"
       },
       {
-        "name": "アルコ＆ピース D.C.GARAGE",
-        "type": "radio"
-      },
-      {
         "name": "テレビ千鳥",
         "type": "tv"
+      },
+      {
+        "name": "アルコ＆ピース D.C.GARAGE",
+        "type": "radio"
       }
     ],
     "wed": [

@@ -679,7 +679,7 @@
     if (watching.length > 0) {
       html += `
         <div class="priority-section">
-          <div class="section-title">👀 視聴中・優先</div>
+          <div class="section-title">👀 In Progress</div>
           <div class="category-items" data-category="watching">
             ${watching.map((item, i) => renderBacklogItem(item, true, i, watching.length)).join('')}
           </div>

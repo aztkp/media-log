@@ -568,19 +568,40 @@
     const year = now.getFullYear();
     const month = now.getMonth();
 
-    const yearDone = watchlist.filter(i => i.status === 'done' && i.completedAt && new Date(i.completedAt).getFullYear() === year);
-    const monthDone = yearDone.filter(i => new Date(i.completedAt).getMonth() === month);
+    // Count each episode as 1 item
+    let yearCount = 0;
+    let monthCount = 0;
+    watchlist.forEach(item => {
+      // Count episode history
+      if (item.episodeHistory && item.episodeHistory.length > 0) {
+        item.episodeHistory.forEach(ep => {
+          const d = new Date(ep.watchedAt);
+          if (d.getFullYear() === year) {
+            yearCount++;
+            if (d.getMonth() === month) monthCount++;
+          }
+        });
+      }
+      // Count single items (without episodes)
+      if (item.status === 'done' && item.completedAt && !item.episodes) {
+        const d = new Date(item.completedAt);
+        if (d.getFullYear() === year) {
+          yearCount++;
+          if (d.getMonth() === month) monthCount++;
+        }
+      }
+    });
     const backlog = watchlist.filter(i => i.status === 'want' || i.status === 'watching');
 
     const statsRow = document.getElementById('stats-row');
     if (statsRow) {
       statsRow.innerHTML = `
         <div class="stat-card">
-          <div class="stat-value">${yearDone.length}</div>
+          <div class="stat-value">${yearCount}</div>
           <div class="stat-label">${year}年の完了</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">${monthDone.length}</div>
+          <div class="stat-value">${monthCount}</div>
           <div class="stat-label">${month + 1}月の完了</div>
         </div>
         <div class="stat-card">
@@ -1186,18 +1207,32 @@
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    // Calculate completed items for current month
-    const monthlyDone = scheduleData.watchlist.filter(i => {
-      if (i.status !== 'done' || !i.completedAt) return false;
-      const d = new Date(i.completedAt);
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    // Calculate completed items for current month (including each episode as 1 item)
+    const monthlyEntries = [];
+    scheduleData.watchlist.forEach(item => {
+      const type = item.type || 'movie';
+      // Add episode history entries
+      if (item.episodeHistory && item.episodeHistory.length > 0) {
+        item.episodeHistory.forEach(ep => {
+          const d = new Date(ep.watchedAt);
+          if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+            monthlyEntries.push({ type, isEpisode: true });
+          }
+        });
+      }
+      // Add completed single items (movies, etc. without episodes)
+      if (item.status === 'done' && item.completedAt && !item.episodes) {
+        const d = new Date(item.completedAt);
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+          monthlyEntries.push({ type, isEpisode: false });
+        }
+      }
     });
 
     // Group by type
     const monthlyByType = {};
-    monthlyDone.forEach(item => {
-      const type = item.type || 'movie';
-      monthlyByType[type] = (monthlyByType[type] || 0) + 1;
+    monthlyEntries.forEach(entry => {
+      monthlyByType[entry.type] = (monthlyByType[entry.type] || 0) + 1;
     });
 
     let html = '';
@@ -1207,7 +1242,7 @@
     if (activeChallenges.length > 0) {
       html += '<div class="challenges-section"><div class="section-title">🎯 進行中のチャレンジ</div>';
       activeChallenges.forEach((challenge, idx) => {
-        const progress = calculateChallengeProgress(challenge, monthlyDone, monthlyByType);
+        const progress = calculateChallengeProgress(challenge, monthlyEntries, monthlyByType);
         const pct = Math.min(100, Math.round(progress.current / progress.target * 100));
         const isComplete = progress.current >= progress.target;
 
@@ -1236,7 +1271,7 @@
         <div class="section-title">📊 今月の実績 (${currentMonth + 1}月)</div>
         <div class="monthly-summary">
           <div class="monthly-total">
-            <span class="monthly-total-value">${monthlyDone.length}</span>
+            <span class="monthly-total-value">${monthlyEntries.length}</span>
             <span class="monthly-total-label">本完了</span>
           </div>
           <div class="monthly-breakdown">
@@ -1271,9 +1306,9 @@
     });
   }
 
-  function calculateChallengeProgress(challenge, monthlyDone, monthlyByType) {
+  function calculateChallengeProgress(challenge, monthlyEntries, monthlyByType) {
     if (challenge.type === 'monthly') {
-      return { current: monthlyDone.length, target: challenge.target };
+      return { current: monthlyEntries.length, target: challenge.target };
     } else if (challenge.type === 'genre') {
       return { current: monthlyByType[challenge.mediaType] || 0, target: challenge.target };
     }
@@ -1381,14 +1416,27 @@
     const contribContainer = document.getElementById('all-contrib');
     if (!container) return;
 
-    // Render GitHub-style contribution graph for done items
+    // Render GitHub-style contribution graph for done items (each episode = 1 item)
     if (contribContainer) {
-      const doneItems = scheduleData.watchlist.filter(i => i.status === 'done');
-      const byType = {};
-      doneItems.forEach(item => {
+      const allEntries = [];
+      scheduleData.watchlist.forEach(item => {
         const type = item.type || 'movie';
-        if (!byType[type]) byType[type] = [];
-        byType[type].push(item);
+        // Add episode history entries
+        if (item.episodeHistory && item.episodeHistory.length > 0) {
+          item.episodeHistory.forEach(() => {
+            allEntries.push({ type });
+          });
+        }
+        // Add single items (without episodes)
+        if (item.status === 'done' && !item.episodes) {
+          allEntries.push({ type });
+        }
+      });
+
+      const byType = {};
+      allEntries.forEach(entry => {
+        if (!byType[entry.type]) byType[entry.type] = [];
+        byType[entry.type].push(entry);
       });
 
       const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube'];
@@ -1404,7 +1452,7 @@
         </div>`;
       });
       contribHtml += '</div>';
-      contribContainer.innerHTML = doneItems.length > 0 ? contribHtml : '';
+      contribContainer.innerHTML = allEntries.length > 0 ? contribHtml : '';
     }
 
     let items = scheduleData.watchlist.map((item, idx) => ({ ...item, idx }));

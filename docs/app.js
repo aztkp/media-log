@@ -7,7 +7,7 @@
 
   const MEDIA_NAMES = {
     movie: '映画', anime: 'アニメ', drama: 'ドラマ', tv: 'テレビ', comedy: 'お笑い',
-    game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信'
+    game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信', youtube: 'YouTube'
   };
 
   function mediaChip(type, showLabel = true) {
@@ -634,7 +634,7 @@
     }
 
     // Category sections
-    const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga'];
+    const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube'];
     categoryOrder.forEach(type => {
       const typeItems = grouped[type];
       if (!typeItems || typeItems.length === 0) return;
@@ -715,7 +715,15 @@
     const item = scheduleData.watchlist[idx];
     if (!item.episodes) return;
 
-    item.currentEpisode = Math.min((item.currentEpisode || 0) + 1, item.episodes);
+    const newEpisode = Math.min((item.currentEpisode || 0) + 1, item.episodes);
+    item.currentEpisode = newEpisode;
+
+    // Record episode history
+    if (!item.episodeHistory) item.episodeHistory = [];
+    item.episodeHistory.push({
+      episode: newEpisode,
+      watchedAt: new Date().toISOString()
+    });
 
     if (item.currentEpisode >= item.episodes) {
       item.status = 'done';
@@ -936,9 +944,35 @@
     const contribContainer = document.getElementById('timeline-contrib');
     if (!container) return;
 
-    const doneItems = scheduleData.watchlist
-      .map((item, idx) => ({ ...item, idx }))
-      .filter(i => i.status === 'done' && i.completedAt)
+    // Build timeline entries: expand episode history for items with episodes
+    const timelineEntries = [];
+    scheduleData.watchlist.forEach((item, idx) => {
+      // Add episode history entries
+      if (item.episodeHistory && item.episodeHistory.length > 0) {
+        item.episodeHistory.forEach(ep => {
+          timelineEntries.push({
+            ...item,
+            idx,
+            isEpisode: true,
+            episodeNum: ep.episode,
+            completedAt: ep.watchedAt,
+            displayTitle: `${item.title} 第${ep.episode}話`
+          });
+        });
+      }
+      // Add completed item (for items without episode history, or single items like movies)
+      if (item.status === 'done' && item.completedAt && !item.episodes) {
+        timelineEntries.push({
+          ...item,
+          idx,
+          isEpisode: false,
+          displayTitle: item.title
+        });
+      }
+    });
+
+    const doneItems = timelineEntries
+      .filter(i => i.completedAt)
       .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
     // Render compact GitHub-style contrib graph
@@ -953,7 +987,7 @@
           byType[type].push(item);
         });
 
-        const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'radio'];
+        const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube', 'radio'];
         let contribHtml = '<div class="contrib-compact">';
         categoryOrder.forEach(type => {
           const items = byType[type] || [];
@@ -987,24 +1021,28 @@
     Object.entries(grouped)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .forEach(([dateKey, items]) => {
+        // Sort items within group by time descending (newest first)
+        items.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
         const date = formatDate(dateKey);
       html += `<div class="history-group">
         <div class="history-date">${date}</div>
         <div class="history-items">
           ${items.map(item => `
-            <div class="history-item">
+            <div class="history-item ${item.isEpisode ? 'episode-entry' : ''}">
               ${item.image ? `<img src="${item.image}" class="history-item-img">` : ''}
               <div class="history-item-body">
                 <div class="history-item-header">
                   ${mediaChip(item.type, false)}
-                  <span class="history-item-title">${item.title}</span>
+                  <span class="history-item-title">${item.displayTitle || item.title}</span>
                 </div>
-                ${item.note ? `<div class="history-item-note">${item.note}</div>` : ''}
+                ${item.note && !item.isEpisode ? `<div class="history-item-note">${item.note}</div>` : ''}
               </div>
+              ${!item.isEpisode ? `
               <div class="history-item-actions">
                 <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit-history">✏️</button>
                 <button class="btn btn-sm btn-danger" data-idx="${item.idx}" data-action="delete-history">🗑️</button>
               </div>
+              ` : ''}
             </div>
           `).join('')}
         </div>
@@ -1100,6 +1138,184 @@
     }, 500);
   }
 
+  // Challenges
+  function renderChallenges() {
+    if (!scheduleData) return;
+
+    const container = document.getElementById('challenges-content');
+    if (!container) return;
+
+    if (!scheduleData.challenges) scheduleData.challenges = [];
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    // Calculate completed items for current month
+    const monthlyDone = scheduleData.watchlist.filter(i => {
+      if (i.status !== 'done' || !i.completedAt) return false;
+      const d = new Date(i.completedAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    // Group by type
+    const monthlyByType = {};
+    monthlyDone.forEach(item => {
+      const type = item.type || 'movie';
+      monthlyByType[type] = (monthlyByType[type] || 0) + 1;
+    });
+
+    let html = '';
+
+    // Active challenges
+    const activeChallenges = scheduleData.challenges.filter(c => !c.completed);
+    if (activeChallenges.length > 0) {
+      html += '<div class="challenges-section"><div class="section-title">🎯 進行中のチャレンジ</div>';
+      activeChallenges.forEach((challenge, idx) => {
+        const progress = calculateChallengeProgress(challenge, monthlyDone, monthlyByType);
+        const pct = Math.min(100, Math.round(progress.current / progress.target * 100));
+        const isComplete = progress.current >= progress.target;
+
+        html += `
+          <div class="challenge-card ${isComplete ? 'complete' : ''}">
+            <div class="challenge-header">
+              <span class="challenge-title">${challenge.title}</span>
+              <button class="btn btn-sm" data-challenge-idx="${idx}" data-action="delete-challenge">×</button>
+            </div>
+            <div class="challenge-progress">
+              <div class="challenge-progress-bar">
+                <div class="challenge-progress-fill" style="width:${pct}%"></div>
+              </div>
+              <div class="challenge-progress-text">${progress.current} / ${progress.target}</div>
+            </div>
+            ${isComplete ? '<div class="challenge-complete-badge">🎉 達成！</div>' : ''}
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+
+    // Monthly summary
+    html += `
+      <div class="challenges-section">
+        <div class="section-title">📊 今月の実績 (${currentMonth + 1}月)</div>
+        <div class="monthly-summary">
+          <div class="monthly-total">
+            <span class="monthly-total-value">${monthlyDone.length}</span>
+            <span class="monthly-total-label">本完了</span>
+          </div>
+          <div class="monthly-breakdown">
+            ${Object.entries(monthlyByType).map(([type, count]) =>
+              `<div class="monthly-type">${mediaChip(type)} ${count}</div>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add new challenge button
+    html += `
+      <div class="challenges-section">
+        <button class="btn btn-primary" id="btn-add-challenge" style="width:100%;">+ チャレンジを追加</button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Event listeners
+    document.getElementById('btn-add-challenge')?.addEventListener('click', openAddChallengeModal);
+
+    container.querySelectorAll('[data-action="delete-challenge"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.dataset.challengeIdx);
+        if (!confirm('このチャレンジを削除しますか？')) return;
+        scheduleData.challenges.splice(idx, 1);
+        await saveData();
+        renderChallenges();
+      });
+    });
+  }
+
+  function calculateChallengeProgress(challenge, monthlyDone, monthlyByType) {
+    if (challenge.type === 'monthly') {
+      return { current: monthlyDone.length, target: challenge.target };
+    } else if (challenge.type === 'genre') {
+      return { current: monthlyByType[challenge.mediaType] || 0, target: challenge.target };
+    }
+    return { current: 0, target: challenge.target };
+  }
+
+  function openAddChallengeModal() {
+    const modal = document.getElementById('edit-modal');
+    const content = document.getElementById('modal-content');
+
+    const now = new Date();
+    const monthName = `${now.getMonth() + 1}月`;
+
+    content.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">チャレンジタイプ</label>
+        <select class="form-select" id="challenge-type">
+          <option value="monthly">${monthName}に○本完了する</option>
+          <option value="genre">${monthName}に特定ジャンルを○本</option>
+        </select>
+      </div>
+      <div class="form-group" id="challenge-genre-group" style="display:none;">
+        <label class="form-label">ジャンル</label>
+        <select class="form-select" id="challenge-genre">
+          ${Object.entries(MEDIA_NAMES).map(([k, v]) =>
+            `<option value="${k}">${v}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">目標数</label>
+        <input type="number" class="form-input" id="challenge-target" value="5" min="1">
+      </div>
+      <button class="btn btn-primary" id="challenge-save" style="width:100%;margin-top:12px;">追加</button>
+    `;
+
+    modal.classList.add('show');
+
+    document.getElementById('challenge-type').addEventListener('change', (e) => {
+      document.getElementById('challenge-genre-group').style.display =
+        e.target.value === 'genre' ? '' : 'none';
+    });
+
+    document.getElementById('challenge-save').addEventListener('click', async () => {
+      const type = document.getElementById('challenge-type').value;
+      const target = parseInt(document.getElementById('challenge-target').value) || 5;
+      const genre = document.getElementById('challenge-genre').value;
+
+      const now = new Date();
+      const monthName = `${now.getMonth() + 1}月`;
+
+      let title;
+      if (type === 'monthly') {
+        title = `${monthName}に${target}本完了する`;
+      } else {
+        title = `${monthName}に${MEDIA_NAMES[genre]}を${target}本`;
+      }
+
+      if (!scheduleData.challenges) scheduleData.challenges = [];
+      scheduleData.challenges.push({
+        type,
+        target,
+        mediaType: type === 'genre' ? genre : null,
+        title,
+        createdAt: new Date().toISOString(),
+        month: now.getMonth(),
+        year: now.getFullYear(),
+        completed: false
+      });
+
+      await saveData();
+      modal.classList.remove('show');
+      renderChallenges();
+      showToast('チャレンジを追加しました');
+    });
+  }
+
   async function deleteHistoryItem(idx) {
     const item = scheduleData.watchlist[idx];
     if (!confirm(`「${item.title}」を完全に削除しますか？`)) return;
@@ -1140,7 +1356,7 @@
         byType[type].push(item);
       });
 
-      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga'];
+      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube'];
       let contribHtml = '<div class="contrib-grid">';
       categoryOrder.forEach(type => {
         const items = byType[type] || [];
@@ -1213,6 +1429,7 @@
     renderTimeline();
     renderShelf();
     renderAllList();
+    renderChallenges();
   }
 
   // Init

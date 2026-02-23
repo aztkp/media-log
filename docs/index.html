@@ -475,6 +475,21 @@
       line-height: 1.5;
     }
 
+    .history-item.episode-entry {
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+    }
+
+    .history-item.episode-entry .history-item-img {
+      width: 32px;
+      height: 32px;
+    }
+
+    .history-item.episode-entry .history-item-title {
+      font-size: 13px;
+      font-weight: 400;
+    }
+
     .history-item-actions {
       display: flex;
       gap: 6px;
@@ -587,6 +602,7 @@
     .contrib-square-sm.book { background: #8bc34a; }
     .contrib-square-sm.manga { background: #ff9800; }
     .contrib-square-sm.radio { background: #607d8b; }
+    .contrib-square-sm.youtube { background: #ff0000; }
 
     /* Media chip - color + label */
     .media-chip {
@@ -617,6 +633,7 @@
     .media-chip.manga { background: #ff9800; }
     .media-chip.radio { background: #607d8b; }
     .media-chip.streaming { background: #795548; }
+    .media-chip.youtube { background: #ff0000; }
 
     .contrib-row {
       background: var(--bg-secondary);
@@ -663,6 +680,7 @@
     .contrib-square.book { background: #8bc34a; }
     .contrib-square.manga { background: #ff9800; }
     .contrib-square.radio { background: #607d8b; }
+    .contrib-square.youtube { background: #ff0000; }
 
     /* Stats */
     .stats-row {
@@ -1090,6 +1108,113 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    /* Challenges */
+    .challenges-section {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .challenge-card {
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .challenge-card.complete {
+      border: 2px solid var(--accent);
+      background: linear-gradient(135deg, #1a2f1a 0%, var(--bg-tertiary) 100%);
+    }
+
+    .challenge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .challenge-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .challenge-progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .challenge-progress-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .challenge-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .challenge-progress-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .challenge-complete-badge {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 16px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .monthly-summary {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .monthly-total {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .monthly-total-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .monthly-total-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .monthly-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .monthly-type {
+      background: var(--bg-tertiary);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
   </style>
 </head>
 <body>
@@ -1128,6 +1253,7 @@
             <option value="game">ゲーム</option>
             <option value="book">本</option>
             <option value="manga">漫画</option>
+            <option value="youtube">YouTube</option>
           </select>
           <button class="btn btn-primary" id="quick-add-btn">追加</button>
         </div>
@@ -1176,6 +1302,8 @@
         <button class="btn btn-primary btn-lg" id="btn-gacha">回す！</button>
         <div id="gacha-result" class="gacha-result"></div>
       </div>
+
+      <div id="challenges-content"></div>
     </div>
   </div>
 

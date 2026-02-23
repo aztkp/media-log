@@ -978,13 +978,16 @@
     // Timeline view - grouped by date
     const grouped = {};
     doneItems.forEach(item => {
-      const date = formatDate(item.completedAt);
-      if (!grouped[date]) grouped[date] = [];
-      grouped[date].push(item);
+      const dateKey = item.completedAt.split('T')[0];
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(item);
     });
 
     let html = '';
-    Object.entries(grouped).forEach(([date, items]) => {
+    Object.entries(grouped)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .forEach(([dateKey, items]) => {
+        const date = formatDate(dateKey);
       html += `<div class="history-group">
         <div class="history-date">${date}</div>
         <div class="history-items">

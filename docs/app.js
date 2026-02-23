@@ -974,11 +974,15 @@
 
       if (newStatus === 'done') {
         const dateVal = document.getElementById('edit-date').value;
-        if (dateVal) {
-          item.completedAt = new Date(dateVal).toISOString();
+        const oldDate = item.completedAt ? item.completedAt.split('T')[0] : '';
+        if (dateVal && dateVal !== oldDate) {
+          // Date changed - set to current time on that date
+          const newDate = new Date(dateVal + 'T' + new Date().toISOString().split('T')[1]);
+          item.completedAt = newDate.toISOString();
         } else if (!item.completedAt) {
           item.completedAt = new Date().toISOString();
         }
+        // If date unchanged, keep original completedAt with its time
       } else {
         delete item.completedAt;
       }
@@ -1093,12 +1097,14 @@
                 ${item.isEpisode && item.episodeNote ? `<div class="history-item-note">${item.episodeNote}</div>` : ''}
                 ${item.note && !item.isEpisode ? `<div class="history-item-note">${item.note}</div>` : ''}
               </div>
-              ${!item.isEpisode ? `
               <div class="history-item-actions">
+                ${item.isEpisode ? `
+                <button class="btn btn-sm" data-idx="${item.idx}" data-episode="${item.episodeNum}" data-action="edit-episode">✏️</button>
+                ` : `
                 <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit-history">✏️</button>
                 <button class="btn btn-sm btn-danger" data-idx="${item.idx}" data-action="delete-history">🗑️</button>
+                `}
               </div>
-              ` : ''}
             </div>
           `).join('')}
         </div>
@@ -1109,6 +1115,10 @@
 
     container.querySelectorAll('[data-action="edit-history"]').forEach(btn => {
       btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.idx)));
+    });
+
+    container.querySelectorAll('[data-action="edit-episode"]').forEach(btn => {
+      btn.addEventListener('click', () => openEditEpisodeModal(parseInt(btn.dataset.idx), parseInt(btn.dataset.episode)));
     });
 
     container.querySelectorAll('[data-action="delete-history"]').forEach(btn => {
@@ -1383,6 +1393,37 @@
       modal.classList.remove('show');
       renderChallenges();
       showToast('チャレンジを追加しました');
+    });
+  }
+
+  function openEditEpisodeModal(idx, episodeNum) {
+    const item = scheduleData.watchlist[idx];
+    const episode = item.episodeHistory?.find(ep => ep.episode === episodeNum);
+    if (!episode) return;
+
+    const modal = document.getElementById('edit-modal');
+    const content = document.getElementById('modal-content');
+
+    content.innerHTML = `
+      <div class="episode-record-header">
+        <span class="episode-record-title">${item.title}</span>
+        <span class="episode-record-num">第${episodeNum}話</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea class="form-textarea" id="episode-note">${episode.note || ''}</textarea>
+      </div>
+      <button class="btn btn-primary" id="episode-update" style="width:100%;margin-top:12px;">保存</button>
+    `;
+
+    modal.classList.add('show');
+
+    document.getElementById('episode-update').addEventListener('click', async () => {
+      episode.note = document.getElementById('episode-note').value.trim() || undefined;
+      await saveData();
+      modal.classList.remove('show');
+      renderAll();
+      showToast('メモを更新しました');
     });
   }
 

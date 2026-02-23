@@ -291,6 +291,13 @@
       "type": "book",
       "status": "want",
       "addedAt": "2026-02-23T06:22:57.045Z"
+    },
+    {
+      "title": "ニューヨークのニューラジオ",
+      "type": "radio",
+      "status": "done",
+      "completedAt": "2026-02-23T06:47:09.568Z",
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771829211270.jpg"
     }
   ]
 }

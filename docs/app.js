@@ -1256,8 +1256,8 @@
       <div class="form-group">
         <label class="form-label">チャレンジタイプ</label>
         <select class="form-select" id="challenge-type">
-          <option value="monthly">${monthName}に○本完了する</option>
-          <option value="genre">${monthName}に特定ジャンルを○本</option>
+          <option value="monthly">${monthName}に全体で○本完了する</option>
+          <option value="genre">${monthName}に[ジャンル]を○本完了する</option>
         </select>
       </div>
       <div class="form-group" id="challenge-genre-group" style="display:none;">
@@ -1292,9 +1292,9 @@
 
       let title;
       if (type === 'monthly') {
-        title = `${monthName}に${target}本完了する`;
+        title = `${monthName}に全体で${target}本完了する`;
       } else {
-        title = `${monthName}に${MEDIA_NAMES[genre]}を${target}本`;
+        title = `${monthName}に${MEDIA_NAMES[genre]}を${target}本完了する`;
       }
 
       if (!scheduleData.challenges) scheduleData.challenges = [];

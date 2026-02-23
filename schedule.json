@@ -318,5 +318,17 @@
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771844601105.jpg",
       "note": "高輪ゲートウェイシティ"
     }
+  ],
+  "challenges": [
+    {
+      "type": "monthly",
+      "target": 50,
+      "mediaType": null,
+      "title": "2月に50本完了する",
+      "createdAt": "2026-02-23T12:58:04.339Z",
+      "month": 1,
+      "year": 2026,
+      "completed": false
+    }
   ]
 }

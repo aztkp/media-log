@@ -168,7 +168,8 @@
       "type": "drama",
       "status": "watching",
       "episodes": 8,
-      "currentEpisode": 2
+      "currentEpisode": 2,
+      "note": "カマゾッツ"
     },
     {
       "title": "未解決事件は終わらせないといけないから",

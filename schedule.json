@@ -408,10 +408,11 @@
     {
       "title": "ダウ90000 第5回演劇公演「また点滅に戻るだけ」",
       "type": "comedy",
-      "status": "watching",
+      "status": "done",
       "addedAt": "2026-02-23T15:32:30.643Z",
       "note": "ジャックポットみたい\nあれどうやったら出れるの？\nここ3年で急激に\nトイザらスどこがひらがなかわかるのか？\nマックスバリュ\n誕生日にケーキ食べる",
-      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771860816251.jpg"
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771860816251.jpg",
+      "completedAt": "2026-02-23T17:29:16.942Z"
     }
   ],
   "challenges": []

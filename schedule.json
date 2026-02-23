@@ -2,14 +2,14 @@
   "weekly": {
     "mon": [
       {
-        "name": "クレイジージャーニー",
-        "type": "tv",
-        "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771856967601.jpg"
-      },
-      {
         "name": "金魚番長のデメキング",
         "type": "radio",
         "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771863568756.jpg"
+      },
+      {
+        "name": "クレイジージャーニー",
+        "type": "tv",
+        "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771856967601.jpg"
       },
       {
         "name": "耳の穴かっぽじって聞け！",

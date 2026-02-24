@@ -130,7 +130,8 @@
       },
       {
         "name": "トキトケトーク",
-        "type": "radio"
+        "type": "radio",
+        "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771903565642.jpg"
       }
     ],
     "sun": [

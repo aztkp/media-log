@@ -125,7 +125,8 @@
     "sat": [
       {
         "name": "真空ジェシカのラジオ父ちゃん",
-        "type": "radio"
+        "type": "radio",
+        "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771903556832.jpg"
       },
       {
         "name": "トキトケトーク",

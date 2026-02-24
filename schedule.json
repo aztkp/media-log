@@ -56,13 +56,13 @@
     ],
     "wed": [
       {
-        "name": "せせらぎラジオ",
-        "type": "radio"
-      },
-      {
         "name": "New Music Wednesday",
         "type": "radio",
         "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771902117315.jpg"
+      },
+      {
+        "name": "せせらぎラジオ",
+        "type": "radio"
       },
       {
         "name": "知らねえ単語",

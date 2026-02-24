@@ -67,7 +67,8 @@
       },
       {
         "name": "知らねえ単語",
-        "type": "radio"
+        "type": "radio",
+        "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771903710962.jpg"
       },
       {
         "name": "有吉の壁",

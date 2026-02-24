@@ -383,7 +383,7 @@
         ${shows.map((s, i) => `
           <div class="day-show ${s.image ? 'has-image' : ''}">
             ${s.image ? `<img src="${s.image}" class="day-show-img">` : mediaChip(s.type || 'radio', false)}
-            <span class="day-show-name">${s.name}</span>
+            ${s.url ? `<a href="${s.url}" target="_blank" class="day-show-name day-show-link">${s.name}</a>` : `<span class="day-show-name">${s.name}</span>`}
             ${editingWeekly ? `
               <span class="day-show-actions">
                 <button class="day-edit-btn" data-day="${day}" data-idx="${i}" title="編集">✏️</button>
@@ -520,6 +520,10 @@
         </select>
       </div>
       <div class="form-group">
+        <label class="form-label">URL（聴取・視聴リンク）</label>
+        <input type="url" class="form-input" id="edit-radio-url" value="${show.url || ''}" placeholder="https://...">
+      </div>
+      <div class="form-group">
         <label class="form-label">画像</label>
         <div class="image-upload-area">
           ${show.image ? `<img src="${show.image}" class="image-preview" id="image-preview">` : '<div class="image-placeholder" id="image-preview">クリックで画像を設定</div>'}
@@ -546,6 +550,7 @@
     document.getElementById('edit-radio-save').addEventListener('click', async () => {
       show.name = document.getElementById('edit-radio-name').value.trim();
       show.type = document.getElementById('edit-radio-type').value;
+      show.url = document.getElementById('edit-radio-url').value.trim() || undefined;
       show.image = document.getElementById('edit-image').value || undefined;
 
       await saveData();
@@ -572,6 +577,10 @@
           <option value="streaming">🎧 配信</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="form-label">URL（聴取・視聴リンク）</label>
+        <input type="url" class="form-input" id="add-radio-url" placeholder="https://...">
+      </div>
       <button class="btn btn-primary" id="add-radio-save" style="width:100%;margin-top:12px;">追加</button>
     `;
 
@@ -580,10 +589,11 @@
     document.getElementById('add-radio-save').addEventListener('click', async () => {
       const name = document.getElementById('add-radio-name').value.trim();
       const type = document.getElementById('add-radio-type').value;
+      const url = document.getElementById('add-radio-url').value.trim();
       if (!name) return;
 
       if (!scheduleData.weekly[day]) scheduleData.weekly[day] = [];
-      scheduleData.weekly[day].push({ name, type });
+      scheduleData.weekly[day].push({ name, type, url: url || undefined });
 
       await saveData();
       modal.classList.remove('show');

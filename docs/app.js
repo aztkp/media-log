@@ -7,7 +7,7 @@
 
   const MEDIA_NAMES = {
     movie: '映画', anime: 'アニメ', drama: 'ドラマ', tv: 'テレビ', comedy: 'お笑い',
-    game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信', youtube: 'YouTube'
+    game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信', youtube: '動画/配信'
   };
 
   function mediaChip(type, showLabel = true) {

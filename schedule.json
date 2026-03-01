@@ -407,9 +407,10 @@
     {
       "title": "ダウ90000 第7回演劇公演「ロマンス」",
       "type": "comedy",
-      "status": "watching",
+      "status": "done",
       "addedAt": "2026-02-22T11:08:24.274Z",
-      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771855185123.jpg"
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771855185123.jpg",
+      "completedAt": "2026-03-01T05:25:27.925Z"
     },
     {
       "title": "舞姫・うたかたの記",

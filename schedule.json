@@ -589,6 +589,14 @@
       "type": "book",
       "status": "want",
       "addedAt": "2026-03-01T07:36:38.833Z"
+    },
+    {
+      "title": "知らねえ単語",
+      "type": "radio",
+      "status": "done",
+      "completedAt": "2026-03-01T14:05:25.495Z",
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771903710962.jpg",
+      "note": "創作にそんなわけねえだろって思うけどそれが最高って思える"
     }
   ],
   "challenges": []

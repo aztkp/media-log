@@ -801,7 +801,14 @@
       "note": "色んな色の異なる球",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1772965147195.jpg",
       "episodes": 6,
-      "currentEpisode": 0
+      "currentEpisode": 1,
+      "episodeHistory": [
+        {
+          "episode": 1,
+          "watchedAt": "2026-03-08T10:34:57.098Z",
+          "note": "色んな色の異なる球"
+        }
+      ]
     }
   ],
   "challenges": []

@@ -1253,6 +1253,52 @@
       align-items: center;
       gap: 6px;
     }
+
+    /* Monthly Summary */
+    .summary-month {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .summary-month-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .summary-month-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .summary-month-total {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .summary-types {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .summary-type-item {
+      background: var(--bg-tertiary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .summary-type-count {
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -1272,7 +1318,7 @@
       <button class="tab active" data-tab="home">ホーム</button>
       <button class="tab" data-tab="timeline">履歴</button>
       <button class="tab" data-tab="shelf">本棚</button>
-      <button class="tab" data-tab="all">リスト</button>
+      <button class="tab" data-tab="summary">サマリ</button>
       <button class="tab" data-tab="lab">実験</button>
     </div>
 
@@ -1319,17 +1365,9 @@
       <div id="shelf-content"></div>
     </div>
 
-    <!-- All List Tab -->
-    <div id="tab-all" class="tab-content">
-      <div id="all-contrib"></div>
-      <div class="backlog-filters" id="all-filters">
-        <button class="filter-btn active" data-filter="all">全て</button>
-        <button class="filter-btn" data-filter="want">☆ 見たい</button>
-        <button class="filter-btn" data-filter="watching">👀 視聴中</button>
-        <button class="filter-btn" data-filter="done">✓ 完了</button>
-        <button class="filter-btn" data-filter="hold">⏸ 保留</button>
-      </div>
-      <div class="backlog-grid" id="all-content"></div>
+    <!-- Summary Tab -->
+    <div id="tab-summary" class="tab-content">
+      <div id="summary-content"></div>
     </div>
 
     <!-- Lab Tab -->

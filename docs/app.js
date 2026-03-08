@@ -21,7 +21,6 @@
 
   let scheduleData = null;
   let scheduleSha = null;
-  let currentAllFilter = 'all';
 
   // Utils
   function b64decode(str) {
@@ -1508,81 +1507,88 @@
     showToast('見たいリストに戻しました');
   }
 
-  // All List
-  function renderAllList() {
+  // Monthly Summary
+  function renderMonthlySummary() {
     if (!scheduleData) return;
 
-    const container = document.getElementById('all-content');
-    const contribContainer = document.getElementById('all-contrib');
+    const container = document.getElementById('summary-content');
     if (!container) return;
 
-    // Render GitHub-style contribution graph for done items (each episode = 1 item)
-    if (contribContainer) {
-      const allEntries = [];
-      scheduleData.watchlist.forEach(item => {
-        const type = item.type || 'movie';
-        // Add episode history entries
-        if (item.episodeHistory && item.episodeHistory.length > 0) {
-          item.episodeHistory.forEach(() => {
-            allEntries.push({ type });
+    // Build all completed entries with dates
+    const entries = [];
+    scheduleData.watchlist.forEach(item => {
+      const type = item.type || 'movie';
+      // Add episode history entries
+      if (item.episodeHistory && item.episodeHistory.length > 0) {
+        item.episodeHistory.forEach(ep => {
+          entries.push({
+            type,
+            date: new Date(ep.watchedAt),
+            title: `${item.title} 第${ep.episode}話`
           });
-        }
-        // Add single items (without episodes)
-        if (item.status === 'done' && !item.episodes) {
-          allEntries.push({ type });
-        }
-      });
+        });
+      }
+      // Add single items (without episodes)
+      if (item.status === 'done' && item.completedAt && !item.episodes) {
+        entries.push({
+          type,
+          date: new Date(item.completedAt),
+          title: item.title
+        });
+      }
+    });
 
-      const byType = {};
-      allEntries.forEach(entry => {
-        if (!byType[entry.type]) byType[entry.type] = [];
-        byType[entry.type].push(entry);
-      });
-
-      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube'];
-      let contribHtml = '<div class="contrib-grid">';
-      categoryOrder.forEach(type => {
-        const items = byType[type] || [];
-        if (items.length === 0) return;
-        contribHtml += `<div class="contrib-row">
-          <div class="contrib-label">${mediaChip(type)} <span class="contrib-count">${items.length}</span></div>
-          <div class="contrib-squares">
-            ${items.map(() => `<div class="contrib-square ${type}"></div>`).join('')}
-          </div>
-        </div>`;
-      });
-      contribHtml += '</div>';
-      contribContainer.innerHTML = allEntries.length > 0 ? contribHtml : '';
-    }
-
-    let items = scheduleData.watchlist.map((item, idx) => ({ ...item, idx }));
-
-    if (currentAllFilter !== 'all') {
-      items = items.filter(i => (i.status || 'want') === currentAllFilter);
-    }
-
-    if (items.length === 0) {
-      container.innerHTML = '<div class="empty">アイテムがありません</div>';
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="empty">まだ記録がありません</div>';
       return;
     }
 
-    container.innerHTML = items.map(item => `
-      <div class="backlog-item">
-        <button class="backlog-item-status" data-idx="${item.idx}">
-          ${STATUS_EMOJI[item.status] || '👀'}
-        </button>
-        <div class="backlog-item-content">
-          <div class="backlog-item-title">${item.title}</div>
-          <div class="backlog-item-meta">${mediaChip(item.type)}</div>
-        </div>
-        <div class="backlog-item-actions">
-          <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit">✏️</button>
-          <button class="btn btn-sm" data-idx="${item.idx}" data-action="delete">×</button>
-        </div>
-      </div>
-    `).join('');
+    // Group by year-month
+    const byMonth = {};
+    entries.forEach(entry => {
+      const key = `${entry.date.getFullYear()}-${String(entry.date.getMonth() + 1).padStart(2, '0')}`;
+      if (!byMonth[key]) byMonth[key] = [];
+      byMonth[key].push(entry);
+    });
 
-    attachItemEvents(container);
+    // Sort months descending
+    const sortedMonths = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
+
+    let html = '';
+    sortedMonths.forEach(monthKey => {
+      const monthEntries = byMonth[monthKey];
+      const [year, month] = monthKey.split('-');
+
+      // Count by type
+      const typeCount = {};
+      monthEntries.forEach(entry => {
+        typeCount[entry.type] = (typeCount[entry.type] || 0) + 1;
+      });
+
+      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube', 'radio', 'streaming'];
+
+      html += `
+        <div class="summary-month">
+          <div class="summary-month-header">
+            <span class="summary-month-title">${year}年${parseInt(month)}月</span>
+            <span class="summary-month-total">${monthEntries.length}本</span>
+          </div>
+          <div class="summary-types">
+            ${categoryOrder.map(type => {
+              const count = typeCount[type];
+              if (!count) return '';
+              return `<div class="summary-type-item">
+                ${mediaChip(type, false)}
+                <span>${MEDIA_NAMES[type]}</span>
+                <span class="summary-type-count">${count}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
   }
 
   // Quick Add
@@ -1611,7 +1617,7 @@
     renderBacklog();
     renderTimeline();
     renderShelf();
-    renderAllList();
+    renderMonthlySummary();
     renderChallenges();
   }
 
@@ -1628,15 +1634,6 @@
     });
 
 
-    // All list filters
-    document.querySelectorAll('#all-filters .filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#all-filters .filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentAllFilter = btn.dataset.filter;
-        renderAllList();
-      });
-    });
 
     // Gacha
     document.getElementById('btn-gacha')?.addEventListener('click', runGacha);

@@ -785,6 +785,12 @@
       "status": "done",
       "completedAt": "2026-03-08T07:01:35.583Z",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771903556832.jpg"
+    },
+    {
+      "title": "Introduction to Human-Computer Interaction",
+      "type": "book",
+      "status": "want",
+      "addedAt": "2026-03-08T07:48:53.565Z"
     }
   ],
   "challenges": []

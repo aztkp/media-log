@@ -904,7 +904,7 @@
     const content = document.getElementById('modal-content');
 
     const completedDate = item.completedAt ? item.completedAt.split('T')[0] : '';
-    const showEpisodes = ['anime', 'drama', 'tv'].includes(item.type);
+    const showEpisodes = ['anime', 'drama', 'tv', 'youtube', 'streaming'].includes(item.type);
 
     content.innerHTML = `
       <div class="form-group">
@@ -961,7 +961,7 @@
 
     document.getElementById('edit-type').addEventListener('change', (e) => {
       const episodesGroup = document.getElementById('edit-episodes-group');
-      episodesGroup.style.display = ['anime', 'drama', 'tv'].includes(e.target.value) ? '' : 'none';
+      episodesGroup.style.display = ['anime', 'drama', 'tv', 'youtube', 'streaming'].includes(e.target.value) ? '' : 'none';
     });
 
     // Image upload

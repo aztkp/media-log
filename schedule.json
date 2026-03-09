@@ -828,12 +828,12 @@
     {
       "title": "行き場のない話2026",
       "type": "youtube",
-      "status": "watching",
+      "status": "done",
       "addedAt": "2026-03-08T10:16:42.867Z",
       "note": "色んな色の異なる球",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1772965147195.jpg",
       "episodes": 6,
-      "currentEpisode": 5,
+      "currentEpisode": 6,
       "episodeHistory": [
         {
           "episode": 1,
@@ -859,8 +859,14 @@
           "episode": 5,
           "watchedAt": "2026-03-09T18:23:34.364Z",
           "note": "皆が納得して笑える最下位"
+        },
+        {
+          "episode": 6,
+          "watchedAt": "2026-03-09T18:39:01.886Z",
+          "note": "不幸なことが起きたときの嬉しさ"
         }
-      ]
+      ],
+      "completedAt": "2026-03-09T18:39:01.886Z"
     }
   ],
   "challenges": []

@@ -227,6 +227,11 @@
         "type": "radio",
         "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771829211270.jpg",
         "url": "https://www.youtube.com/@newyorkchannel/videos"
+      },
+      {
+        "name": "黒帯会議",
+        "type": "radio",
+        "url": "https://www.youtube.com/@kuroobikaigi"
       }
     ]
   },

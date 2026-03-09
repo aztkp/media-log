@@ -816,7 +816,7 @@
       "note": "色んな色の異なる球",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1772965147195.jpg",
       "episodes": 6,
-      "currentEpisode": 3,
+      "currentEpisode": 4,
       "episodeHistory": [
         {
           "episode": 1,
@@ -832,6 +832,11 @@
           "episode": 3,
           "watchedAt": "2026-03-09T11:27:18.718Z",
           "note": "友達の基準、自販機で遮れるか"
+        },
+        {
+          "episode": 4,
+          "watchedAt": "2026-03-09T11:38:53.858Z",
+          "note": "優秀すぎる店員が嫌な話"
         }
       ]
     }

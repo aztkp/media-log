@@ -272,6 +272,15 @@
     return `${date.getMonth() + 1}/${date.getDate()}`;
   }
 
+  // Get local date key (YYYY-MM-DD) from ISO string
+  function getLocalDateKey(isoString) {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   function getTodayDayKey() {
     const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
     return days[new Date().getDay()];
@@ -1167,10 +1176,10 @@
       return;
     }
 
-    // Timeline view - grouped by date
+    // Timeline view - grouped by date (local timezone)
     const grouped = {};
     doneItems.forEach(item => {
-      const dateKey = item.completedAt.split('T')[0];
+      const dateKey = getLocalDateKey(item.completedAt);
       if (!grouped[dateKey]) grouped[dateKey] = [];
       grouped[dateKey].push(item);
     });

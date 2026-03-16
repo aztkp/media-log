@@ -309,7 +309,7 @@
       "status": "watching",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1772860528229.jpg",
       "episodes": 12,
-      "currentEpisode": 5,
+      "currentEpisode": 6,
       "episodeHistory": [
         {
           "episode": 3,
@@ -325,6 +325,11 @@
           "episode": 5,
           "watchedAt": "2026-03-09T17:17:23.205Z",
           "note": "努力したミカから見たミツミ"
+        },
+        {
+          "episode": 6,
+          "watchedAt": "2026-03-16T14:23:58.297Z",
+          "note": "そいつのためを思ってる感ある発言だけど本当に言いたかったことなのだろうか？"
         }
       ]
     },

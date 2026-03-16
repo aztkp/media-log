@@ -976,6 +976,13 @@
       "type": "manga",
       "status": "want",
       "addedAt": "2026-03-16T17:13:30.449Z"
+    },
+    {
+      "title": "沈黙の金曜日 3月13日（金）",
+      "type": "radio",
+      "status": "done",
+      "completedAt": "2026-03-16T17:40:05.231Z",
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771929344100.jpg"
     }
   ],
   "challenges": []

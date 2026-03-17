@@ -367,7 +367,7 @@
       "type": "drama",
       "status": "watching",
       "episodes": 8,
-      "currentEpisode": 4,
+      "currentEpisode": 5,
       "note": "カマゾッツ",
       "episodeHistory": [
         {
@@ -379,6 +379,11 @@
           "episode": 4,
           "watchedAt": "2026-03-16T07:54:24.059Z",
           "note": "ウィルが覚醒した"
+        },
+        {
+          "episode": 5,
+          "watchedAt": "2026-03-17T16:35:27.852Z",
+          "note": "不評だった人間の回収がうまい、ウィルがゲイである必要ないだろって思ってたけどロビンとの関係があつい"
         }
       ],
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771851754242.jpg"

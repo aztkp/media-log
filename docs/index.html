@@ -1432,6 +1432,75 @@
       gap: 8px;
       margin-top: 12px;
     }
+
+    .music-url-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .music-url-row .form-input {
+      flex: 1;
+    }
+
+    .music-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .music-preview-artwork {
+      width: 50px;
+      height: 50px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    .music-preview-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .music-preview-title {
+      font-weight: 500;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .music-preview-artist {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .diary-entry-music {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .diary-entry-music:hover {
+      background: var(--bg-card);
+    }
+
+    .diary-entry-music-artwork {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
@@ -1502,10 +1571,22 @@
         </div>
         <div class="form-group">
           <label class="form-label">その時の音楽（任意）</label>
-          <div class="music-input-row">
-            <input type="text" class="form-input" id="diary-music-title" placeholder="曲名">
-            <input type="text" class="form-input" id="diary-music-artist" placeholder="アーティスト">
+          <div class="music-url-row">
+            <input type="text" class="form-input" id="diary-music-url" placeholder="Apple Music URLを貼り付け...">
+            <button class="btn" id="diary-music-fetch" type="button">取得</button>
           </div>
+          <div class="music-preview" id="diary-music-preview" style="display:none;">
+            <img class="music-preview-artwork" id="diary-music-artwork" src="" alt="">
+            <div class="music-preview-info">
+              <div class="music-preview-title" id="diary-music-title-display"></div>
+              <div class="music-preview-artist" id="diary-music-artist-display"></div>
+            </div>
+            <button class="btn btn-sm" id="diary-music-clear" type="button">×</button>
+          </div>
+          <input type="hidden" id="diary-music-title">
+          <input type="hidden" id="diary-music-artist">
+          <input type="hidden" id="diary-music-artwork">
+          <input type="hidden" id="diary-music-link">
         </div>
         <button class="btn btn-primary" id="diary-save" style="width:100%;">記録する</button>
       </div>

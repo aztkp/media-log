@@ -1661,6 +1661,36 @@
     renderAll();
   }
 
+  // Apple Music API
+  async function fetchAppleMusicInfo(url) {
+    // Extract track ID from Apple Music URL
+    // Format: https://music.apple.com/jp/album/xxx/123?i=456 or https://music.apple.com/jp/song/xxx/456
+    const trackIdMatch = url.match(/[?&]i=(\d+)/);
+    const songIdMatch = url.match(/\/song\/[^/]+\/(\d+)/);
+    const trackId = trackIdMatch ? trackIdMatch[1] : (songIdMatch ? songIdMatch[1] : null);
+
+    if (!trackId) {
+      throw new Error('トラックIDが見つかりません');
+    }
+
+    // Use iTunes Search API (CORS-friendly)
+    const res = await fetch(`https://itunes.apple.com/lookup?id=${trackId}&country=jp`);
+    if (!res.ok) throw new Error('API error');
+
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      throw new Error('曲が見つかりません');
+    }
+
+    const track = data.results[0];
+    return {
+      title: track.trackName || track.collectionName,
+      artist: track.artistName,
+      artwork: track.artworkUrl100?.replace('100x100', '400x400') || track.artworkUrl60,
+      url: track.trackViewUrl || url
+    };
+  }
+
   // Diary
   function renderDiary() {
     if (!scheduleData) return;
@@ -1690,13 +1720,15 @@
           </div>
           ${entry.note ? `<div class="diary-entry-content">${escapeHtml(entry.note)}</div>` : ''}
           ${entry.music && (entry.music.title || entry.music.artist) ? `
-            <div class="diary-entry-music">
-              <span class="diary-entry-music-icon">🎵</span>
+            <${entry.music.url ? `a href="${entry.music.url}" target="_blank"` : 'div'} class="diary-entry-music">
+              ${entry.music.artwork
+                ? `<img class="diary-entry-music-artwork" src="${entry.music.artwork}" alt="">`
+                : '<span class="diary-entry-music-icon">🎵</span>'}
               <div class="diary-entry-music-info">
                 <div class="diary-entry-music-title">${entry.music.title || ''}</div>
                 ${entry.music.artist ? `<div class="diary-entry-music-artist">${entry.music.artist}</div>` : ''}
               </div>
-            </div>
+            </${entry.music.url ? 'a' : 'div'}>
           ` : ''}
           <div class="diary-entry-actions">
             <button class="btn btn-sm" data-idx="${entry.idx}" data-action="edit-diary">✏️ 編集</button>
@@ -1724,8 +1756,10 @@
   async function saveDiaryEntry() {
     const title = document.getElementById('diary-title').value.trim();
     const content = document.getElementById('diary-content').value.trim();
-    const musicTitle = document.getElementById('diary-music-title').value.trim();
-    const musicArtist = document.getElementById('diary-music-artist').value.trim();
+    const musicTitle = document.getElementById('diary-music-title').value;
+    const musicArtist = document.getElementById('diary-music-artist').value;
+    const musicArtwork = document.getElementById('diary-music-artwork').value;
+    const musicLink = document.getElementById('diary-music-link').value;
 
     if (!title && !content) {
       showToast('タイトルか内容を入力してください', 'error');
@@ -1740,7 +1774,9 @@
       note: content || undefined,
       music: (musicTitle || musicArtist) ? {
         title: musicTitle || undefined,
-        artist: musicArtist || undefined
+        artist: musicArtist || undefined,
+        artwork: musicArtwork || undefined,
+        url: musicLink || undefined
       } : undefined
     };
 
@@ -1750,17 +1786,27 @@
     // Clear form
     document.getElementById('diary-title').value = '';
     document.getElementById('diary-content').value = '';
-    document.getElementById('diary-music-title').value = '';
-    document.getElementById('diary-music-artist').value = '';
+    clearMusicPreview();
 
     renderAll();
     showToast('日記を記録しました');
+  }
+
+  function clearMusicPreview() {
+    document.getElementById('diary-music-url').value = '';
+    document.getElementById('diary-music-title').value = '';
+    document.getElementById('diary-music-artist').value = '';
+    document.getElementById('diary-music-artwork').value = '';
+    document.getElementById('diary-music-link').value = '';
+    document.getElementById('diary-music-preview').style.display = 'none';
   }
 
   function openEditDiaryModal(idx) {
     const item = scheduleData.watchlist[idx];
     const modal = document.getElementById('edit-modal');
     const content = document.getElementById('modal-content');
+
+    const hasMusic = item.music && (item.music.title || item.music.artist);
 
     content.innerHTML = `
       <div class="form-group">
@@ -1773,25 +1819,98 @@
       </div>
       <div class="form-group">
         <label class="form-label">その時の音楽</label>
-        <div class="music-input-row">
-          <input type="text" class="form-input" id="edit-diary-music-title" placeholder="曲名" value="${item.music?.title || ''}">
-          <input type="text" class="form-input" id="edit-diary-music-artist" placeholder="アーティスト" value="${item.music?.artist || ''}">
+        <div class="music-url-row">
+          <input type="text" class="form-input" id="edit-diary-music-url" placeholder="Apple Music URLを貼り付け...">
+          <button class="btn" id="edit-diary-music-fetch" type="button">取得</button>
         </div>
+        <div class="music-preview" id="edit-diary-music-preview" style="display:${hasMusic ? 'flex' : 'none'};">
+          ${item.music?.artwork ? `<img class="music-preview-artwork" src="${item.music.artwork}" alt="">` : '<span style="font-size:24px;">🎵</span>'}
+          <div class="music-preview-info">
+            <div class="music-preview-title">${item.music?.title || ''}</div>
+            <div class="music-preview-artist">${item.music?.artist || ''}</div>
+          </div>
+          <button class="btn btn-sm" id="edit-diary-music-clear" type="button">×</button>
+        </div>
+        <input type="hidden" id="edit-diary-music-title" value="${item.music?.title || ''}">
+        <input type="hidden" id="edit-diary-music-artist" value="${item.music?.artist || ''}">
+        <input type="hidden" id="edit-diary-music-artwork" value="${item.music?.artwork || ''}">
+        <input type="hidden" id="edit-diary-music-link" value="${item.music?.url || ''}">
       </div>
       <button class="btn btn-primary" id="edit-diary-save" style="width:100%;margin-top:12px;">保存</button>
     `;
 
     modal.classList.add('show');
 
+    // Fetch music info
+    document.getElementById('edit-diary-music-fetch').addEventListener('click', async () => {
+      const url = document.getElementById('edit-diary-music-url').value.trim();
+      if (!url) {
+        showToast('URLを入力してください', 'error');
+        return;
+      }
+
+      try {
+        const btn = document.getElementById('edit-diary-music-fetch');
+        btn.textContent = '...';
+        btn.disabled = true;
+
+        const info = await fetchAppleMusicInfo(url);
+
+        document.getElementById('edit-diary-music-title').value = info.title || '';
+        document.getElementById('edit-diary-music-artist').value = info.artist || '';
+        document.getElementById('edit-diary-music-artwork').value = info.artwork || '';
+        document.getElementById('edit-diary-music-link').value = info.url || '';
+
+        // Update preview
+        const preview = document.getElementById('edit-diary-music-preview');
+        preview.innerHTML = `
+          <img class="music-preview-artwork" src="${info.artwork || ''}" alt="">
+          <div class="music-preview-info">
+            <div class="music-preview-title">${info.title || ''}</div>
+            <div class="music-preview-artist">${info.artist || ''}</div>
+          </div>
+          <button class="btn btn-sm" id="edit-diary-music-clear" type="button">×</button>
+        `;
+        preview.style.display = 'flex';
+
+        // Re-attach clear handler
+        document.getElementById('edit-diary-music-clear').addEventListener('click', clearEditMusicPreview);
+
+        btn.textContent = '取得';
+        btn.disabled = false;
+        showToast('曲情報を取得しました');
+      } catch (e) {
+        document.getElementById('edit-diary-music-fetch').textContent = '取得';
+        document.getElementById('edit-diary-music-fetch').disabled = false;
+        showToast(e.message || '取得に失敗しました', 'error');
+      }
+    });
+
+    function clearEditMusicPreview() {
+      document.getElementById('edit-diary-music-url').value = '';
+      document.getElementById('edit-diary-music-title').value = '';
+      document.getElementById('edit-diary-music-artist').value = '';
+      document.getElementById('edit-diary-music-artwork').value = '';
+      document.getElementById('edit-diary-music-link').value = '';
+      document.getElementById('edit-diary-music-preview').style.display = 'none';
+    }
+
+    document.getElementById('edit-diary-music-clear')?.addEventListener('click', clearEditMusicPreview);
+
     document.getElementById('edit-diary-save').addEventListener('click', async () => {
       item.title = document.getElementById('edit-diary-title').value.trim() || '無題';
       item.note = document.getElementById('edit-diary-content').value.trim() || undefined;
 
-      const musicTitle = document.getElementById('edit-diary-music-title').value.trim();
-      const musicArtist = document.getElementById('edit-diary-music-artist').value.trim();
+      const musicTitle = document.getElementById('edit-diary-music-title').value;
+      const musicArtist = document.getElementById('edit-diary-music-artist').value;
+      const musicArtwork = document.getElementById('edit-diary-music-artwork').value;
+      const musicLink = document.getElementById('edit-diary-music-link').value;
+
       item.music = (musicTitle || musicArtist) ? {
         title: musicTitle || undefined,
-        artist: musicArtist || undefined
+        artist: musicArtist || undefined,
+        artwork: musicArtwork || undefined,
+        url: musicLink || undefined
       } : undefined;
 
       await saveData();
@@ -1839,6 +1958,46 @@
 
     // Diary
     document.getElementById('diary-save')?.addEventListener('click', saveDiaryEntry);
+
+    document.getElementById('diary-music-fetch')?.addEventListener('click', async () => {
+      const url = document.getElementById('diary-music-url').value.trim();
+      if (!url) {
+        showToast('URLを入力してください', 'error');
+        return;
+      }
+
+      try {
+        const btn = document.getElementById('diary-music-fetch');
+        btn.textContent = '...';
+        btn.disabled = true;
+
+        const info = await fetchAppleMusicInfo(url);
+
+        document.getElementById('diary-music-title').value = info.title || '';
+        document.getElementById('diary-music-artist').value = info.artist || '';
+        document.getElementById('diary-music-artwork').value = info.artwork || '';
+        document.getElementById('diary-music-link').value = info.url || '';
+
+        // Show preview
+        document.getElementById('diary-music-artwork').value = info.artwork || '';
+        const preview = document.getElementById('diary-music-preview');
+        document.getElementById('diary-music-artwork').setAttribute('data-src', info.artwork || '');
+        preview.querySelector('.music-preview-artwork').src = info.artwork || '';
+        preview.querySelector('.music-preview-title').textContent = info.title || '';
+        preview.querySelector('.music-preview-artist').textContent = info.artist || '';
+        preview.style.display = 'flex';
+
+        btn.textContent = '取得';
+        btn.disabled = false;
+        showToast('曲情報を取得しました');
+      } catch (e) {
+        document.getElementById('diary-music-fetch').textContent = '取得';
+        document.getElementById('diary-music-fetch').disabled = false;
+        showToast(e.message || '取得に失敗しました', 'error');
+      }
+    });
+
+    document.getElementById('diary-music-clear')?.addEventListener('click', clearMusicPreview);
 
     // Gacha
     document.getElementById('btn-gacha')?.addEventListener('click', runGacha);

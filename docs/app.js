@@ -1722,6 +1722,7 @@
   }
 
   async function saveDiaryEntry() {
+    const dateVal = document.getElementById('diary-date').value;
     const title = document.getElementById('diary-title').value.trim();
     const content = document.getElementById('diary-content').value.trim();
     const musicTitle = document.getElementById('diary-music-title').value;
@@ -1734,11 +1735,14 @@
       return;
     }
 
+    // Use selected date with current time
+    const selectedDate = dateVal ? new Date(dateVal + 'T' + new Date().toTimeString().split(' ')[0]) : new Date();
+
     const entry = {
       title: title || '無題',
       type: 'event',
       status: 'done',
-      completedAt: new Date().toISOString(),
+      completedAt: selectedDate.toISOString(),
       note: content || undefined,
       music: (musicTitle || musicArtist) ? {
         title: musicTitle || undefined,
@@ -1752,6 +1756,7 @@
     await saveData();
 
     // Clear form
+    document.getElementById('diary-date').value = new Date().toISOString().split('T')[0];
     document.getElementById('diary-title').value = '';
     document.getElementById('diary-content').value = '';
     clearMusicPreview();
@@ -1775,8 +1780,13 @@
     const content = document.getElementById('modal-content');
 
     const hasMusic = item.music && (item.music.title || item.music.artist);
+    const dateVal = item.completedAt ? item.completedAt.split('T')[0] : '';
 
     content.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">日付</label>
+        <input type="date" class="form-input" id="edit-diary-date" value="${dateVal}">
+      </div>
       <div class="form-group">
         <label class="form-label">タイトル</label>
         <input type="text" class="form-input" id="edit-diary-title" value="${item.title || ''}">
@@ -1866,8 +1876,18 @@
     document.getElementById('edit-diary-music-clear')?.addEventListener('click', clearEditMusicPreview);
 
     document.getElementById('edit-diary-save').addEventListener('click', async () => {
+      const newDateVal = document.getElementById('edit-diary-date').value;
       item.title = document.getElementById('edit-diary-title').value.trim() || '無題';
       item.note = document.getElementById('edit-diary-content').value.trim() || undefined;
+
+      // Update date if changed
+      if (newDateVal) {
+        const oldDate = item.completedAt ? item.completedAt.split('T')[0] : '';
+        if (newDateVal !== oldDate) {
+          const newDate = new Date(newDateVal + 'T' + new Date().toTimeString().split(' ')[0]);
+          item.completedAt = newDate.toISOString();
+        }
+      }
 
       const musicTitle = document.getElementById('edit-diary-music-title').value;
       const musicArtist = document.getElementById('edit-diary-music-artist').value;
@@ -1924,6 +1944,10 @@
 
 
     // Diary
+    const diaryDateInput = document.getElementById('diary-date');
+    if (diaryDateInput) {
+      diaryDateInput.value = new Date().toISOString().split('T')[0];
+    }
     document.getElementById('diary-save')?.addEventListener('click', saveDiaryEntry);
 
     document.getElementById('diary-music-fetch')?.addEventListener('click', async () => {

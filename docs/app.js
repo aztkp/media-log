@@ -7,7 +7,8 @@
 
   const MEDIA_NAMES = {
     movie: '映画', anime: 'アニメ', drama: 'ドラマ', tv: 'テレビ', comedy: 'お笑い',
-    game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信', youtube: '動画'
+    game: 'ゲーム', book: '本', manga: '漫画', radio: 'ラジオ', streaming: '配信', youtube: '動画',
+    event: 'できごと'
   };
 
   function mediaChip(type, showLabel = true) {
@@ -719,7 +720,7 @@
     }
 
     // Category sections
-    const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube'];
+    const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube', 'event'];
     categoryOrder.forEach(type => {
       const typeItems = grouped[type];
       if (!typeItems || typeItems.length === 0) return;
@@ -1154,7 +1155,7 @@
           byType[type].push(item);
         });
 
-        const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube', 'radio'];
+        const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube', 'radio', 'event'];
         let contribHtml = '<div class="contrib-compact">';
         categoryOrder.forEach(type => {
           const items = byType[type] || [];
@@ -1615,7 +1616,7 @@
         typeCount[entry.type] = (typeCount[entry.type] || 0) + 1;
       });
 
-      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube', 'radio', 'streaming'];
+      const categoryOrder = ['movie', 'anime', 'drama', 'tv', 'comedy', 'game', 'book', 'manga', 'youtube', 'radio', 'streaming', 'event'];
 
       html += `
         <div class="summary-month">

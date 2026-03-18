@@ -14,4 +14,4 @@
 
 ## メディアタイプ
 
-movie, anime, drama, tv, comedy, game, book, manga, radio, streaming, youtube
+movie, anime, drama, tv, comedy, game, book, manga, radio, streaming, youtube, event

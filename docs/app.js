@@ -1195,27 +1195,35 @@
       html += `<div class="history-group">
         <div class="history-date">${date}</div>
         <div class="history-items">
-          ${items.map(item => `
-            <div class="history-item ${item.isEpisode ? 'episode-entry' : ''}">
-              ${item.image ? `<img src="${item.image}" class="history-item-img">` : ''}
+          ${items.map(item => {
+            const isEvent = item.type === 'event';
+            const thumbnail = isEvent && item.music?.artwork ? item.music.artwork : item.image;
+            const noteText = item.isEpisode ? item.episodeNote : item.note;
+            const displayNote = isEvent && noteText ? truncateNote(noteText) : noteText;
+            return `
+            <div class="history-item ${item.isEpisode ? 'episode-entry' : ''} ${isEvent ? 'event-entry' : ''}">
+              ${thumbnail ? `<img src="${thumbnail}" class="history-item-img">` : ''}
               <div class="history-item-body">
                 <div class="history-item-header">
                   ${mediaChip(item.type, false)}
                   <span class="history-item-title">${item.displayTitle || item.title}</span>
                 </div>
-                ${item.isEpisode && item.episodeNote ? `<div class="history-item-note">${item.episodeNote}</div>` : ''}
-                ${item.note && !item.isEpisode ? `<div class="history-item-note">${item.note}</div>` : ''}
+                ${displayNote ? `<div class="history-item-note">${escapeHtml(displayNote)}</div>` : ''}
+                ${isEvent && item.music?.title ? `<div class="history-item-music">🎵 ${item.music.title}${item.music.artist ? ' - ' + item.music.artist : ''}</div>` : ''}
               </div>
               <div class="history-item-actions">
                 ${item.isEpisode ? `
                 <button class="btn btn-sm" data-idx="${item.idx}" data-episode="${item.episodeNum}" data-action="edit-episode">✏️</button>
+                ` : isEvent ? `
+                <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit-diary">✏️</button>
+                <button class="btn btn-sm btn-danger" data-idx="${item.idx}" data-action="delete-diary">🗑️</button>
                 ` : `
                 <button class="btn btn-sm" data-idx="${item.idx}" data-action="edit-history">✏️</button>
                 <button class="btn btn-sm btn-danger" data-idx="${item.idx}" data-action="delete-history">🗑️</button>
                 `}
               </div>
             </div>
-          `).join('')}
+          `;}).join('')}
         </div>
       </div>`;
     });
@@ -1232,6 +1240,14 @@
 
     container.querySelectorAll('[data-action="delete-history"]').forEach(btn => {
       btn.addEventListener('click', () => deleteHistoryItem(parseInt(btn.dataset.idx)));
+    });
+
+    container.querySelectorAll('[data-action="edit-diary"]').forEach(btn => {
+      btn.addEventListener('click', () => openEditDiaryModal(parseInt(btn.dataset.idx)));
+    });
+
+    container.querySelectorAll('[data-action="delete-diary"]').forEach(btn => {
+      btn.addEventListener('click', () => deleteDiaryEntry(parseInt(btn.dataset.idx)));
     });
   }
 
@@ -1691,66 +1707,18 @@
     };
   }
 
-  // Diary
-  function renderDiary() {
-    if (!scheduleData) return;
-
-    const container = document.getElementById('diary-list');
-    if (!container) return;
-
-    const entries = scheduleData.watchlist
-      .map((item, idx) => ({ ...item, idx }))
-      .filter(i => i.type === 'event')
-      .sort((a, b) => new Date(b.completedAt || b.addedAt || 0) - new Date(a.completedAt || a.addedAt || 0));
-
-    if (entries.length === 0) {
-      container.innerHTML = '<div class="empty">まだ日記がありません</div>';
-      return;
-    }
-
-    container.innerHTML = entries.map(entry => {
-      const date = entry.completedAt ? new Date(entry.completedAt) : null;
-      const dateStr = date ? `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}` : '';
-
-      return `
-        <div class="diary-entry">
-          <div class="diary-entry-header">
-            <div class="diary-entry-title">${entry.title}</div>
-            <div class="diary-entry-date">${dateStr}</div>
-          </div>
-          ${entry.note ? `<div class="diary-entry-content">${escapeHtml(entry.note)}</div>` : ''}
-          ${entry.music && (entry.music.title || entry.music.artist) ? `
-            <${entry.music.url ? `a href="${entry.music.url}" target="_blank"` : 'div'} class="diary-entry-music">
-              ${entry.music.artwork
-                ? `<img class="diary-entry-music-artwork" src="${entry.music.artwork}" alt="">`
-                : '<span class="diary-entry-music-icon">🎵</span>'}
-              <div class="diary-entry-music-info">
-                <div class="diary-entry-music-title">${entry.music.title || ''}</div>
-                ${entry.music.artist ? `<div class="diary-entry-music-artist">${entry.music.artist}</div>` : ''}
-              </div>
-            </${entry.music.url ? 'a' : 'div'}>
-          ` : ''}
-          <div class="diary-entry-actions">
-            <button class="btn btn-sm" data-idx="${entry.idx}" data-action="edit-diary">✏️ 編集</button>
-            <button class="btn btn-sm btn-danger" data-idx="${entry.idx}" data-action="delete-diary">🗑️ 削除</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    container.querySelectorAll('[data-action="edit-diary"]').forEach(btn => {
-      btn.addEventListener('click', () => openEditDiaryModal(parseInt(btn.dataset.idx)));
-    });
-
-    container.querySelectorAll('[data-action="delete-diary"]').forEach(btn => {
-      btn.addEventListener('click', () => deleteDiaryEntry(parseInt(btn.dataset.idx)));
-    });
-  }
-
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  function truncateNote(text, maxLength = 100) {
+    if (!text) return '';
+    // Replace newlines with spaces and truncate
+    const oneLine = text.replace(/\n+/g, ' ').trim();
+    if (oneLine.length <= maxLength) return oneLine;
+    return oneLine.substring(0, maxLength) + '...';
   }
 
   async function saveDiaryEntry() {
@@ -1935,7 +1903,6 @@
     renderWeeklyCalendar();
     renderStats();
     renderBacklog();
-    renderDiary();
     renderTimeline();
     renderShelf();
     renderMonthlySummary();

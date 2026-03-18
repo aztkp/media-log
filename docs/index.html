@@ -1501,6 +1501,16 @@
       border-radius: 6px;
       object-fit: cover;
     }
+
+    .history-item-music {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .history-item.event-entry {
+      border-left: 3px solid #26a69a;
+    }
   </style>
 </head>
 <body>
@@ -1518,11 +1528,11 @@
 
     <div class="tabs">
       <button class="tab active" data-tab="home">ホーム</button>
-      <button class="tab" data-tab="diary">日記</button>
       <button class="tab" data-tab="timeline">履歴</button>
       <button class="tab" data-tab="shelf">本棚</button>
       <button class="tab" data-tab="summary">サマリ</button>
       <button class="tab" data-tab="lab">実験</button>
+      <button class="tab" data-tab="diary">日記</button>
     </div>
 
     <!-- Home Tab -->
@@ -1558,6 +1568,34 @@
       <div id="backlog-content"></div>
     </div>
 
+    <!-- Timeline Tab -->
+    <div id="tab-timeline" class="tab-content">
+      <div id="timeline-contrib"></div>
+      <div id="timeline-content"></div>
+    </div>
+
+    <!-- Shelf Tab -->
+    <div id="tab-shelf" class="tab-content">
+      <div id="shelf-content"></div>
+    </div>
+
+    <!-- Summary Tab -->
+    <div id="tab-summary" class="tab-content">
+      <div id="summary-content"></div>
+    </div>
+
+    <!-- Lab Tab -->
+    <div id="tab-lab" class="tab-content">
+      <div class="lab-section">
+        <div class="lab-title">🎰 ガチャ</div>
+        <div class="lab-desc">見たいリストからランダムに1つ選びます</div>
+        <button class="btn btn-primary btn-lg" id="btn-gacha">回す！</button>
+        <div id="gacha-result" class="gacha-result"></div>
+      </div>
+
+      <div id="challenges-content"></div>
+    </div>
+
     <!-- Diary Tab -->
     <div id="tab-diary" class="tab-content">
       <div class="diary-form">
@@ -1590,35 +1628,6 @@
         </div>
         <button class="btn btn-primary" id="diary-save" style="width:100%;">記録する</button>
       </div>
-      <div class="diary-list" id="diary-list"></div>
-    </div>
-
-    <!-- Timeline Tab -->
-    <div id="tab-timeline" class="tab-content">
-      <div id="timeline-contrib"></div>
-      <div id="timeline-content"></div>
-    </div>
-
-    <!-- Shelf Tab -->
-    <div id="tab-shelf" class="tab-content">
-      <div id="shelf-content"></div>
-    </div>
-
-    <!-- Summary Tab -->
-    <div id="tab-summary" class="tab-content">
-      <div id="summary-content"></div>
-    </div>
-
-    <!-- Lab Tab -->
-    <div id="tab-lab" class="tab-content">
-      <div class="lab-section">
-        <div class="lab-title">🎰 ガチャ</div>
-        <div class="lab-desc">見たいリストからランダムに1つ選びます</div>
-        <button class="btn btn-primary btn-lg" id="btn-gacha">回す！</button>
-        <div id="gacha-result" class="gacha-result"></div>
-      </div>
-
-      <div id="challenges-content"></div>
     </div>
   </div>
 

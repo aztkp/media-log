@@ -1340,6 +1340,98 @@
     .past-thumbnail.selected {
       border-color: var(--accent);
     }
+
+    /* Diary */
+    .diary-form {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .diary-textarea {
+      min-height: 150px;
+      line-height: 1.6;
+    }
+
+    .music-input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .music-input-row .form-input {
+      flex: 1;
+    }
+
+    .diary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .diary-entry {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .diary-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .diary-entry-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .diary-entry-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .diary-entry-content {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      margin-bottom: 12px;
+    }
+
+    .diary-entry-music {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    .diary-entry-music-icon {
+      font-size: 16px;
+    }
+
+    .diary-entry-music-info {
+      flex: 1;
+    }
+
+    .diary-entry-music-title {
+      font-weight: 500;
+    }
+
+    .diary-entry-music-artist {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .diary-entry-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
   </style>
 </head>
 <body>
@@ -1357,6 +1449,7 @@
 
     <div class="tabs">
       <button class="tab active" data-tab="home">ホーム</button>
+      <button class="tab" data-tab="diary">日記</button>
       <button class="tab" data-tab="timeline">履歴</button>
       <button class="tab" data-tab="shelf">本棚</button>
       <button class="tab" data-tab="summary">サマリ</button>
@@ -1394,6 +1487,29 @@
 
       <!-- Backlog -->
       <div id="backlog-content"></div>
+    </div>
+
+    <!-- Diary Tab -->
+    <div id="tab-diary" class="tab-content">
+      <div class="diary-form">
+        <div class="form-group">
+          <label class="form-label">タイトル</label>
+          <input type="text" class="form-input" id="diary-title" placeholder="今日のできごと...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">内容</label>
+          <textarea class="form-textarea diary-textarea" id="diary-content" placeholder="何があった？どう感じた？"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">その時の音楽（任意）</label>
+          <div class="music-input-row">
+            <input type="text" class="form-input" id="diary-music-title" placeholder="曲名">
+            <input type="text" class="form-input" id="diary-music-artist" placeholder="アーティスト">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="diary-save" style="width:100%;">記録する</button>
+      </div>
+      <div class="diary-list" id="diary-list"></div>
     </div>
 
     <!-- Timeline Tab -->

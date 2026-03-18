@@ -1661,11 +1661,162 @@
     renderAll();
   }
 
+  // Diary
+  function renderDiary() {
+    if (!scheduleData) return;
+
+    const container = document.getElementById('diary-list');
+    if (!container) return;
+
+    const entries = scheduleData.watchlist
+      .map((item, idx) => ({ ...item, idx }))
+      .filter(i => i.type === 'event')
+      .sort((a, b) => new Date(b.completedAt || b.addedAt || 0) - new Date(a.completedAt || a.addedAt || 0));
+
+    if (entries.length === 0) {
+      container.innerHTML = '<div class="empty">まだ日記がありません</div>';
+      return;
+    }
+
+    container.innerHTML = entries.map(entry => {
+      const date = entry.completedAt ? new Date(entry.completedAt) : null;
+      const dateStr = date ? `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}` : '';
+
+      return `
+        <div class="diary-entry">
+          <div class="diary-entry-header">
+            <div class="diary-entry-title">${entry.title}</div>
+            <div class="diary-entry-date">${dateStr}</div>
+          </div>
+          ${entry.note ? `<div class="diary-entry-content">${escapeHtml(entry.note)}</div>` : ''}
+          ${entry.music && (entry.music.title || entry.music.artist) ? `
+            <div class="diary-entry-music">
+              <span class="diary-entry-music-icon">🎵</span>
+              <div class="diary-entry-music-info">
+                <div class="diary-entry-music-title">${entry.music.title || ''}</div>
+                ${entry.music.artist ? `<div class="diary-entry-music-artist">${entry.music.artist}</div>` : ''}
+              </div>
+            </div>
+          ` : ''}
+          <div class="diary-entry-actions">
+            <button class="btn btn-sm" data-idx="${entry.idx}" data-action="edit-diary">✏️ 編集</button>
+            <button class="btn btn-sm btn-danger" data-idx="${entry.idx}" data-action="delete-diary">🗑️ 削除</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('[data-action="edit-diary"]').forEach(btn => {
+      btn.addEventListener('click', () => openEditDiaryModal(parseInt(btn.dataset.idx)));
+    });
+
+    container.querySelectorAll('[data-action="delete-diary"]').forEach(btn => {
+      btn.addEventListener('click', () => deleteDiaryEntry(parseInt(btn.dataset.idx)));
+    });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async function saveDiaryEntry() {
+    const title = document.getElementById('diary-title').value.trim();
+    const content = document.getElementById('diary-content').value.trim();
+    const musicTitle = document.getElementById('diary-music-title').value.trim();
+    const musicArtist = document.getElementById('diary-music-artist').value.trim();
+
+    if (!title && !content) {
+      showToast('タイトルか内容を入力してください', 'error');
+      return;
+    }
+
+    const entry = {
+      title: title || '無題',
+      type: 'event',
+      status: 'done',
+      completedAt: new Date().toISOString(),
+      note: content || undefined,
+      music: (musicTitle || musicArtist) ? {
+        title: musicTitle || undefined,
+        artist: musicArtist || undefined
+      } : undefined
+    };
+
+    scheduleData.watchlist.push(entry);
+    await saveData();
+
+    // Clear form
+    document.getElementById('diary-title').value = '';
+    document.getElementById('diary-content').value = '';
+    document.getElementById('diary-music-title').value = '';
+    document.getElementById('diary-music-artist').value = '';
+
+    renderAll();
+    showToast('日記を記録しました');
+  }
+
+  function openEditDiaryModal(idx) {
+    const item = scheduleData.watchlist[idx];
+    const modal = document.getElementById('edit-modal');
+    const content = document.getElementById('modal-content');
+
+    content.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">タイトル</label>
+        <input type="text" class="form-input" id="edit-diary-title" value="${item.title || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">内容</label>
+        <textarea class="form-textarea diary-textarea" id="edit-diary-content">${item.note || ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">その時の音楽</label>
+        <div class="music-input-row">
+          <input type="text" class="form-input" id="edit-diary-music-title" placeholder="曲名" value="${item.music?.title || ''}">
+          <input type="text" class="form-input" id="edit-diary-music-artist" placeholder="アーティスト" value="${item.music?.artist || ''}">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="edit-diary-save" style="width:100%;margin-top:12px;">保存</button>
+    `;
+
+    modal.classList.add('show');
+
+    document.getElementById('edit-diary-save').addEventListener('click', async () => {
+      item.title = document.getElementById('edit-diary-title').value.trim() || '無題';
+      item.note = document.getElementById('edit-diary-content').value.trim() || undefined;
+
+      const musicTitle = document.getElementById('edit-diary-music-title').value.trim();
+      const musicArtist = document.getElementById('edit-diary-music-artist').value.trim();
+      item.music = (musicTitle || musicArtist) ? {
+        title: musicTitle || undefined,
+        artist: musicArtist || undefined
+      } : undefined;
+
+      await saveData();
+      modal.classList.remove('show');
+      renderAll();
+      showToast('日記を更新しました');
+    });
+  }
+
+  async function deleteDiaryEntry(idx) {
+    const item = scheduleData.watchlist[idx];
+    if (!confirm(`「${item.title}」を削除しますか？`)) return;
+
+    scheduleData.watchlist.splice(idx, 1);
+    await saveData();
+    renderAll();
+    showToast('削除しました');
+  }
+
   // Render All
   function renderAll() {
     renderWeeklyCalendar();
     renderStats();
     renderBacklog();
+    renderDiary();
     renderTimeline();
     renderShelf();
     renderMonthlySummary();
@@ -1685,6 +1836,9 @@
     });
 
 
+
+    // Diary
+    document.getElementById('diary-save')?.addEventListener('click', saveDiaryEntry);
 
     // Gacha
     document.getElementById('btn-gacha')?.addEventListener('click', runGacha);

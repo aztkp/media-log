@@ -365,9 +365,9 @@
     {
       "title": "ストレンジャー・シングス シーズン5",
       "type": "drama",
-      "status": "watching",
+      "status": "done",
       "episodes": 8,
-      "currentEpisode": 7,
+      "currentEpisode": 8,
       "note": "カマゾッツ\n理解したり納得する必要はなくただ受け入れろ",
       "episodeHistory": [
         {
@@ -394,9 +394,14 @@
           "episode": 7,
           "watchedAt": "2026-03-19T17:54:42.726Z",
           "note": "エイトとウィルのシーン"
+        },
+        {
+          "episode": 8,
+          "watchedAt": "2026-03-19T20:14:29.004Z"
         }
       ],
-      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771851754242.jpg"
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771851754242.jpg",
+      "completedAt": "2026-03-19T20:14:29.005Z"
     },
     {
       "title": "未解決事件は終わらせないといけないから",

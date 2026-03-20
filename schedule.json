@@ -316,7 +316,7 @@
       "status": "watching",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1772860528229.jpg",
       "episodes": 12,
-      "currentEpisode": 6,
+      "currentEpisode": 7,
       "episodeHistory": [
         {
           "episode": 3,
@@ -337,6 +337,11 @@
           "episode": 6,
           "watchedAt": "2026-03-16T14:23:58.297Z",
           "note": "そいつのためを思ってる感ある発言だけど本当に言いたかったことなのだろうか？"
+        },
+        {
+          "episode": 7,
+          "watchedAt": "2026-03-20T09:00:28.257Z",
+          "note": "みつみが主人公じゃない気がしてきた"
         }
       ]
     },

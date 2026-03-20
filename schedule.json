@@ -531,7 +531,9 @@
       "type": "book",
       "status": "watching",
       "addedAt": "2026-02-23T06:22:57.045Z",
-      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1773434356322.jpg"
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1773434356322.jpg",
+      "episodes": 5,
+      "currentEpisode": 0
     },
     {
       "title": "ニューヨークのニューラジオ 第355回",

@@ -1269,15 +1269,17 @@
     }
 
     container.innerHTML = `<div class="shelf-grid">
-      ${doneItems.map(item => `
+      ${doneItems.map(item => {
+        const thumbnail = item.type === 'event' && item.music?.artwork ? item.music.artwork : item.image;
+        return `
         <div class="shelf-item" data-idx="${item.idx}">
-          ${item.image
-            ? `<img class="shelf-cover" src="${item.image}" alt="${item.title}">`
+          ${thumbnail
+            ? `<img class="shelf-cover" src="${thumbnail}" alt="${item.title}">`
             : `<div class="shelf-cover shelf-placeholder">${mediaChip(item.type)}</div>`
           }
           <div class="shelf-title">${item.title}</div>
         </div>
-      `).join('')}
+      `;}).join('')}
     </div>`;
 
     container.querySelectorAll('.shelf-item').forEach(item => {

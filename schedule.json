@@ -1066,6 +1066,19 @@
       "status": "watching",
       "addedAt": "2026-03-20T09:10:14.469Z",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1773997890151.jpg"
+    },
+    {
+      "title": "CSCW Reject",
+      "type": "event",
+      "status": "done",
+      "completedAt": "2026-03-18T09:19:42.000Z",
+      "note": "頭ではもう一回出し直せばいいと分かってるんだけど右脳痛が止まらない、体がアメリカに行きたいって言ってる",
+      "music": {
+        "title": "ヒッチコック (Re-Recording)",
+        "artist": "ヨルシカ",
+        "artwork": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/2e/8b/c3/2e8bc3b7-6f8e-f722-5fdb-b69a7c8c6ac4/26UMGIM18610.rgb.jpg/400x400bb.jpg",
+        "url": "https://music.apple.com/jp/album/%E3%83%92%E3%83%83%E3%83%81%E3%82%B3%E3%83%83%E3%82%AF-re-recording/1876728371?i=1876728683&uo=4"
+      }
     }
   ],
   "challenges": []

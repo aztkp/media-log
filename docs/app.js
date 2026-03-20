@@ -17,6 +17,11 @@
   }
 
   const STATUS_EMOJI = { want: '☆', watching: '👀', done: '✓', hold: '⏸' };
+  const EPISODE_TYPES = ['anime', 'drama', 'tv', 'youtube', 'streaming', 'book'];
+
+  function getEpisodeUnit(type) {
+    return type === 'book' ? '章' : '話';
+  }
   const DAY_NAMES = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
   const DAY_ORDER = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
@@ -744,7 +749,7 @@
   }
 
   function renderBacklogItem(item, isWatching, indexInCategory, categoryLength) {
-    const progressText = item.episodes ? `${item.currentEpisode || 0}/${item.episodes}話` : '';
+    const progressText = item.episodes ? `${item.currentEpisode || 0}/${item.episodes}${getEpisodeUnit(item.type)}` : '';
     const progressPct = item.episodes ? Math.round((item.currentEpisode || 0) / item.episodes * 100) : 0;
 
     return `
@@ -925,7 +930,7 @@
     const content = document.getElementById('modal-content');
 
     const completedDate = item.completedAt ? item.completedAt.split('T')[0] : '';
-    const showEpisodes = ['anime', 'drama', 'tv', 'youtube', 'streaming'].includes(item.type);
+    const showEpisodes = EPISODE_TYPES.includes(item.type);
 
     content.innerHTML = `
       <div class="form-group">
@@ -950,12 +955,12 @@
         </select>
       </div>
       <div class="form-group" id="edit-episodes-group" style="${showEpisodes ? '' : 'display:none'}">
-        <label class="form-label">話数（連続ものの場合）</label>
+        <label class="form-label" id="edit-episodes-label">${item.type === 'book' ? '章数' : '話数'}（連続ものの場合）</label>
         <div class="episode-inputs">
           <input type="number" class="form-input" id="edit-current-ep" value="${item.currentEpisode || 0}" min="0" placeholder="現在">
           <span class="episode-sep">/</span>
-          <input type="number" class="form-input" id="edit-total-ep" value="${item.episodes || ''}" min="1" placeholder="全話数">
-          <span class="episode-label">話</span>
+          <input type="number" class="form-input" id="edit-total-ep" value="${item.episodes || ''}" min="1" placeholder="${item.type === 'book' ? '全章数' : '全話数'}">
+          <span class="episode-label" id="edit-episode-unit">${getEpisodeUnit(item.type)}</span>
         </div>
       </div>
       <div class="form-group" id="edit-date-group" style="${item.status === 'done' ? '' : 'display:none'}">
@@ -994,7 +999,14 @@
 
     document.getElementById('edit-type').addEventListener('change', (e) => {
       const episodesGroup = document.getElementById('edit-episodes-group');
-      episodesGroup.style.display = ['anime', 'drama', 'tv', 'youtube', 'streaming'].includes(e.target.value) ? '' : 'none';
+      const isEpisodeType = EPISODE_TYPES.includes(e.target.value);
+      episodesGroup.style.display = isEpisodeType ? '' : 'none';
+      if (isEpisodeType) {
+        const unit = getEpisodeUnit(e.target.value);
+        document.getElementById('edit-episodes-label').textContent = (e.target.value === 'book' ? '章数' : '話数') + '（連続ものの場合）';
+        document.getElementById('edit-episode-unit').textContent = unit;
+        document.getElementById('edit-total-ep').placeholder = e.target.value === 'book' ? '全章数' : '全話数';
+      }
     });
 
     // Image upload

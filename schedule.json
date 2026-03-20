@@ -313,7 +313,7 @@
     {
       "title": "スキップとローファー",
       "type": "anime",
-      "status": "done",
+      "status": "watching",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1772860528229.jpg",
       "episodes": 12,
       "currentEpisode": 7,
@@ -343,8 +343,7 @@
           "watchedAt": "2026-03-20T09:00:28.257Z",
           "note": "みつみが主人公じゃない気がしてきた"
         }
-      ],
-      "completedAt": "2026-03-20T12:51:19.830Z"
+      ]
     },
     {
       "title": "かぐや様",

@@ -267,9 +267,10 @@
     {
       "title": "Perfect Blue",
       "type": "movie",
-      "status": "watching",
+      "status": "done",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1773686405552.jpg",
-      "note": "曲がめちゃくちゃダサいのがいい"
+      "note": "曲がめちゃくちゃダサいのがいい",
+      "completedAt": "2026-03-20T17:57:11.918Z"
     },
     {
       "title": "バック・トゥ・ザ・フューチャー",

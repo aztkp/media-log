@@ -941,10 +941,11 @@
     {
       "title": "女の園の星 1巻",
       "type": "manga",
-      "status": "watching",
+      "status": "done",
       "addedAt": "2026-03-13T10:16:35.020Z",
       "note": "皆目見当がつかない\n寿司に親を殺された",
-      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1773988606215.jpg"
+      "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1773988606215.jpg",
+      "completedAt": "2026-03-20T11:07:34.332Z"
     },
     {
       "title": "知らねえ単語  第六十四回 「女の園の星」ご関係者の皆様へ",

@@ -338,7 +338,7 @@
         headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: '📊 Update media log',
-          content: b64encode(JSON.stringify(scheduleData, null, 2)),
+          content: b64encode(JSON.stringify(scheduleData)),
           sha: scheduleSha
         })
       });
@@ -358,7 +358,7 @@
             headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: '📊 Update media log',
-              content: b64encode(JSON.stringify(scheduleData, null, 2)),
+              content: b64encode(JSON.stringify(scheduleData)),
               sha: scheduleSha
             })
           });

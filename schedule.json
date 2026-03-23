@@ -1120,6 +1120,19 @@
       "status": "done",
       "completedAt": "2026-03-23T17:49:04.257Z",
       "image": "https://raw.githubusercontent.com/aztkp/media-log/main/images/1771929397381.jpg"
+    },
+    {
+      "title": "無題",
+      "type": "event",
+      "status": "done",
+      "completedAt": "2026-03-21T17:51:48.000Z",
+      "note": "正直に言います。やるたびに結論は同じです。",
+      "music": {
+        "title": "夜の公園",
+        "artist": "赤い公園",
+        "artwork": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/cd/44/5b/cd445b25-4808-e310-e88d-ab7e0dd7dc44/jacket_ESCL05385B00Z_550.jpg/400x400bb.jpg",
+        "url": "https://music.apple.com/jp/album/%E5%A4%9C%E3%81%AE%E5%85%AC%E5%9C%92/1538137736?i=1538137744&uo=4"
+      }
     }
   ],
   "challenges": []

@@ -317,9 +317,37 @@
     }
   }
 
-  async function saveData() {
+  // Optimistic UI: show success immediately, save in background
+  let saveTimeout = null;
+  let isSaving = false;
+  let saveRetryCount = 0;
+  const MAX_RETRIES = 3;
+
+  function saveData() {
     const token = getToken();
     if (!token || !scheduleData) return false;
+
+    // Show success immediately (optimistic UI)
+    showToast('保存しました');
+
+    // Debounce: wait 1 second to batch rapid saves
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+
+    saveTimeout = setTimeout(() => {
+      saveDataToGitHub();
+    }, 1000);
+
+    return true;
+  }
+
+  async function saveDataToGitHub() {
+    const token = getToken();
+    if (!token || !scheduleData) return;
+
+    if (isSaving) return;
+    isSaving = true;
 
     try {
       // Always get latest SHA before saving to avoid conflicts
@@ -365,8 +393,8 @@
           if (retry.ok) {
             const data = await retry.json();
             scheduleSha = data.content.sha;
-            showToast('保存しました');
-            return true;
+            saveRetryCount = 0;
+            return;
           }
         }
       }
@@ -378,12 +406,23 @@
 
       const data = await res.json();
       scheduleSha = data.content.sha;
-      showToast('保存しました');
-      return true;
+      saveRetryCount = 0;
     } catch (e) {
       console.error('Save error:', e);
-      showToast('保存に失敗しました', 'error');
-      return false;
+      saveRetryCount++;
+      if (saveRetryCount < MAX_RETRIES) {
+        showToast(`保存に失敗。再試行中...(${saveRetryCount}/${MAX_RETRIES})`, 'error');
+        setTimeout(() => {
+          isSaving = false;
+          saveDataToGitHub();
+        }, 3000);
+        return;
+      } else {
+        showToast('保存に失敗しました。ページを再読み込みしてください', 'error');
+        saveRetryCount = 0;
+      }
+    } finally {
+      isSaving = false;
     }
   }
 

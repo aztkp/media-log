@@ -318,6 +318,7 @@
     }
 
     try {
+      // Fetch main schedule.json
       const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
         headers: { 'Authorization': `token ${token}` }
       });
@@ -327,6 +328,10 @@
       scheduleData = JSON.parse(b64decode(data.content));
       if (!scheduleData.watchlist) scheduleData.watchlist = [];
       if (!scheduleData.weekly) scheduleData.weekly = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] };
+
+      // Fetch archive files (non-blocking, merge into watchlist)
+      fetchArchiveData(token);
+
       return scheduleData;
     } catch (e) {
       showToast('データの読み込みに失敗しました', 'error');
@@ -334,40 +339,79 @@
     }
   }
 
-  // Optimistic UI: show success immediately, save in background
-  let saveTimeout = null;
-  let isSaving = false;
-  let saveRetryCount = 0;
-  const MAX_RETRIES = 3;
+  // Fetch archive data and merge into scheduleData.watchlist
+  async function fetchArchiveData(token) {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/archive`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (!res.ok) return; // No archive folder yet
 
-  function saveData() {
+      const files = await res.json();
+      const archiveFiles = files.filter(f => f.name.endsWith('.json'));
+
+      for (const file of archiveFiles) {
+        const fileRes = await fetch(file.download_url);
+        if (fileRes.ok) {
+          const items = await fileRes.json();
+          // Merge archive items into watchlist (avoid duplicates)
+          const existingIds = new Set(scheduleData.watchlist.map(i => i.completedAt + i.title));
+          for (const item of items) {
+            const id = item.completedAt + item.title;
+            if (!existingIds.has(id)) {
+              scheduleData.watchlist.push(item);
+              existingIds.add(id);
+            }
+          }
+        }
+      }
+      // Re-render views after archive loaded
+      if (typeof renderHistory === 'function') renderHistory();
+      if (typeof renderBookshelf === 'function') renderBookshelf();
+    } catch (e) {
+      console.log('No archive data or failed to fetch:', e);
+    }
+  }
+
+  // Archive data (past months' watchlist items)
+  let archiveData = [];
+
+  // Get current month key (YYYY-MM)
+  function getCurrentMonthKey() {
+    const d = getAdjustedNow();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
+  // Get month key from date string
+  function getMonthKey(dateStr) {
+    if (!dateStr) return null;
+    return dateStr.slice(0, 7);
+  }
+
+  // Save only current month data to schedule.json
+  async function saveData() {
     const token = getToken();
     if (!token || !scheduleData) return false;
 
-    // Show success immediately (optimistic UI)
-    showToast('保存しました');
-
-    // Debounce: wait 1 second to batch rapid saves
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
-    }
-
-    saveTimeout = setTimeout(() => {
-      saveDataToGitHub();
-    }, 1000);
-
-    return true;
-  }
-
-  async function saveDataToGitHub() {
-    const token = getToken();
-    if (!token || !scheduleData) return;
-
-    if (isSaving) return;
-    isSaving = true;
-
     try {
-      // Always get latest SHA before saving to avoid conflicts
+      const currentMonth = getCurrentMonthKey();
+
+      // Separate current month items from archive items
+      const currentMonthItems = scheduleData.watchlist.filter(item => {
+        const month = getMonthKey(item.completedAt);
+        return !month || month === currentMonth || item.status !== 'completed';
+      });
+
+      // Data to save (only current month + non-completed)
+      const savePayload = {
+        weekly: scheduleData.weekly,
+        watchlist: currentMonthItems,
+        challenges: scheduleData.challenges || []
+      };
+
+      // Always get latest SHA before saving
       if (!scheduleSha) {
         const latest = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
           headers: { 'Authorization': `token ${token}` }
@@ -383,7 +427,7 @@
         headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: '📊 Update media log',
-          content: b64encode(JSON.stringify(scheduleData)),
+          content: b64encode(JSON.stringify(savePayload)),
           sha: scheduleSha
         })
       });
@@ -397,21 +441,20 @@
         if (latest.ok) {
           const latestData = await latest.json();
           scheduleSha = latestData.sha;
-          // Retry once
           const retry = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
             method: 'PUT',
             headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: '📊 Update media log',
-              content: b64encode(JSON.stringify(scheduleData)),
+              content: b64encode(JSON.stringify(savePayload)),
               sha: scheduleSha
             })
           });
           if (retry.ok) {
             const data = await retry.json();
             scheduleSha = data.content.sha;
-            saveRetryCount = 0;
-            return;
+            showToast('保存しました');
+            return true;
           }
         }
       }
@@ -423,23 +466,95 @@
 
       const data = await res.json();
       scheduleSha = data.content.sha;
-      saveRetryCount = 0;
+      showToast('保存しました');
+      return true;
     } catch (e) {
       console.error('Save error:', e);
-      saveRetryCount++;
-      if (saveRetryCount < MAX_RETRIES) {
-        showToast(`保存に失敗。再試行中...(${saveRetryCount}/${MAX_RETRIES})`, 'error');
-        setTimeout(() => {
-          isSaving = false;
-          saveDataToGitHub();
-        }, 3000);
-        return;
-      } else {
-        showToast('保存に失敗しました。ページを再読み込みしてください', 'error');
-        saveRetryCount = 0;
+      showToast('保存に失敗しました', 'error');
+      return false;
+    }
+  }
+
+  // Archive past months' data to separate files
+  async function archivePastMonths() {
+    const token = getToken();
+    if (!token || !scheduleData) return;
+
+    const currentMonth = getCurrentMonthKey();
+
+    // Group completed items by month
+    const byMonth = {};
+    for (const item of scheduleData.watchlist) {
+      if (item.status === 'completed' && item.completedAt) {
+        const month = getMonthKey(item.completedAt);
+        if (month && month < currentMonth) {
+          if (!byMonth[month]) byMonth[month] = [];
+          byMonth[month].push(item);
+        }
       }
-    } finally {
-      isSaving = false;
+    }
+
+    if (Object.keys(byMonth).length === 0) {
+      showToast('アーカイブするデータがありません');
+      return;
+    }
+
+    showToast('アーカイブ中...');
+
+    try {
+      for (const [month, items] of Object.entries(byMonth)) {
+        const path = `archive/${month}.json`;
+
+        // Check if file exists
+        let existingSha = null;
+        let existingItems = [];
+        try {
+          const check = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`, {
+            headers: { 'Authorization': `token ${token}` }
+          });
+          if (check.ok) {
+            const fileData = await check.json();
+            existingSha = fileData.sha;
+            existingItems = JSON.parse(b64decode(fileData.content));
+          }
+        } catch (e) {}
+
+        // Merge with existing items
+        const existingIds = new Set(existingItems.map(i => i.completedAt + i.title));
+        for (const item of items) {
+          const id = item.completedAt + item.title;
+          if (!existingIds.has(id)) {
+            existingItems.push(item);
+          }
+        }
+
+        // Save archive file
+        const body = {
+          message: `📦 Archive ${month}`,
+          content: b64encode(JSON.stringify(existingItems))
+        };
+        if (existingSha) body.sha = existingSha;
+
+        await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+      }
+
+      // Remove archived items from watchlist
+      scheduleData.watchlist = scheduleData.watchlist.filter(item => {
+        if (item.status !== 'completed' || !item.completedAt) return true;
+        const month = getMonthKey(item.completedAt);
+        return !month || month >= currentMonth;
+      });
+
+      // Save updated schedule.json
+      await saveData();
+      showToast('アーカイブ完了');
+    } catch (e) {
+      console.error('Archive error:', e);
+      showToast('アーカイブに失敗しました', 'error');
     }
   }
 
@@ -2095,6 +2210,12 @@
       document.getElementById('settings-modal').classList.remove('show');
       showToast('設定を保存しました');
       await loadData();
+    });
+
+    document.getElementById('settings-archive')?.addEventListener('click', async () => {
+      if (confirm('過去月のデータをアーカイブしますか？')) {
+        await archivePastMonths();
+      }
     });
 
     // Refresh

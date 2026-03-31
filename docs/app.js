@@ -287,9 +287,26 @@
     return `${year}-${month}-${day}`;
   }
 
+  // Get adjusted date (before 5am is treated as previous day)
+  function getAdjustedNow() {
+    const now = new Date();
+    if (now.getHours() < 5) {
+      now.setDate(now.getDate() - 1);
+    }
+    return now;
+  }
+
+  function getAdjustedDateString() {
+    const d = getAdjustedNow();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   function getTodayDayKey() {
     const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-    return days[new Date().getDay()];
+    return days[getAdjustedNow().getDay()];
   }
 
   // API
@@ -1107,7 +1124,7 @@
       if (e.target.value === 'done') {
         dateGroup.style.display = '';
         if (!document.getElementById('edit-date').value) {
-          document.getElementById('edit-date').value = new Date().toISOString().split('T')[0];
+          document.getElementById('edit-date').value = getAdjustedDateString();
         }
       } else {
         dateGroup.style.display = 'none';
@@ -1809,7 +1826,7 @@
     await saveData();
 
     // Clear form
-    document.getElementById('diary-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('diary-date').value = getAdjustedDateString();
     document.getElementById('diary-title').value = '';
     document.getElementById('diary-content').value = '';
     clearMusicPreview();
@@ -1999,7 +2016,7 @@
     // Diary
     const diaryDateInput = document.getElementById('diary-date');
     if (diaryDateInput) {
-      diaryDateInput.value = new Date().toISOString().split('T')[0];
+      diaryDateInput.value = getAdjustedDateString();
     }
     document.getElementById('diary-save')?.addEventListener('click', saveDiaryEntry);
 

@@ -304,6 +304,10 @@
     return `${year}-${month}-${day}`;
   }
 
+  function getAdjustedISOString() {
+    return getAdjustedNow().toISOString();
+  }
+
   function getTodayDayKey() {
     const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
     return days[getAdjustedNow().getDay()];
@@ -687,7 +691,7 @@
         title,
         type: show.type || 'radio',
         status: 'done',
-        completedAt: new Date().toISOString(),
+        completedAt: getAdjustedISOString(),
         image: show.image || undefined,
         note: note || undefined
       });
@@ -982,7 +986,7 @@
   async function completeItem(idx) {
     const item = scheduleData.watchlist[idx];
     item.status = 'done';
-    item.completedAt = new Date().toISOString();
+    item.completedAt = getAdjustedISOString();
     await saveData();
     renderAll();
     showToast(`「${item.title}」完了！`);
@@ -1023,13 +1027,13 @@
       if (!item.episodeHistory) item.episodeHistory = [];
       item.episodeHistory.push({
         episode: newEpisode,
-        watchedAt: new Date().toISOString(),
+        watchedAt: getAdjustedISOString(),
         note: note || undefined
       });
 
       if (isComplete) {
         item.status = 'done';
-        item.completedAt = new Date().toISOString();
+        item.completedAt = getAdjustedISOString();
         showToast(`「${item.title}」完了！`);
       }
 
@@ -1079,7 +1083,7 @@
 
     item.status = next;
     if (next === 'done' && !item.completedAt) {
-      item.completedAt = new Date().toISOString();
+      item.completedAt = getAdjustedISOString();
     } else if (next !== 'done') {
       delete item.completedAt;
     }
@@ -1269,10 +1273,10 @@
         const oldDate = item.completedAt ? item.completedAt.split('T')[0] : '';
         if (dateVal && dateVal !== oldDate) {
           // Date changed - set to current time on that date
-          const newDate = new Date(dateVal + 'T' + new Date().toISOString().split('T')[1]);
+          const newDate = new Date(dateVal + 'T' + getAdjustedISOString().split('T')[1]);
           item.completedAt = newDate.toISOString();
         } else if (!item.completedAt) {
-          item.completedAt = new Date().toISOString();
+          item.completedAt = getAdjustedISOString();
         }
         // If date unchanged, keep original completedAt with its time
       } else {
@@ -1693,7 +1697,7 @@
         target,
         mediaType: type === 'genre' ? genre : null,
         title,
-        createdAt: new Date().toISOString(),
+        createdAt: getAdjustedISOString(),
         month: now.getMonth(),
         year: now.getFullYear(),
         completed: false
@@ -1854,7 +1858,7 @@
       title,
       type,
       status: 'want',
-      addedAt: new Date().toISOString()
+      addedAt: getAdjustedISOString()
     });
 
     await saveData();

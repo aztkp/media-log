@@ -394,37 +394,114 @@
     return dateStr.slice(0, 7);
   }
 
-  // Save only current month data to schedule.json
-  async function saveData() {
+  // Fetch latest remote schedule.json data and SHA
+  async function fetchRemoteData(token) {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to fetch remote data');
+    const meta = await res.json();
+    return {
+      data: JSON.parse(b64decode(meta.content)),
+      sha: meta.sha
+    };
+  }
+
+  // Unique key for watchlist item identification
+  function getItemKey(item) {
+    return (item.addedAt || item.completedAt || '') + '|' + item.title;
+  }
+
+  // Pick the item with more progress or later timestamp
+  function pickNewerItem(local, remote) {
+    if (local.status === 'done' && remote.status !== 'done') return local;
+    if (remote.status === 'done' && local.status !== 'done') return remote;
+    if ((local.currentEpisode || 0) > (remote.currentEpisode || 0)) return local;
+    if ((remote.currentEpisode || 0) > (local.currentEpisode || 0)) return remote;
+    if ((local.episodeHistory?.length || 0) > (remote.episodeHistory?.length || 0)) return local;
+    if ((remote.episodeHistory?.length || 0) > (local.episodeHistory?.length || 0)) return remote;
+    const localTime = local.completedAt || local.addedAt || '';
+    const remoteTime = remote.completedAt || remote.addedAt || '';
+    return localTime >= remoteTime ? local : remote;
+  }
+
+  // Merge two watchlists with union strategy
+  function mergeWatchlists(local, remote) {
+    const merged = new Map();
+    for (const item of remote) {
+      merged.set(getItemKey(item), item);
+    }
+    for (const item of local) {
+      const key = getItemKey(item);
+      if (merged.has(key)) {
+        merged.set(key, pickNewerItem(item, merged.get(key)));
+      } else {
+        merged.set(key, item);
+      }
+    }
+    return Array.from(merged.values());
+  }
+
+  // Merge weekly schedules with union strategy
+  function mergeWeekly(local, remote) {
+    const merged = {};
+    for (const day of Object.keys(DAY_NAMES)) {
+      const localShows = local[day] || [];
+      const remoteShows = remote[day] || [];
+      const seen = new Set();
+      const result = [];
+      for (const show of remoteShows) {
+        seen.add(show.name + '|' + show.type);
+        result.push(show);
+      }
+      for (const show of localShows) {
+        if (!seen.has(show.name + '|' + show.type)) result.push(show);
+      }
+      merged[day] = result;
+    }
+    return merged;
+  }
+
+  // Merge challenges with union strategy
+  function mergeChallenges(local, remote) {
+    const merged = new Map();
+    for (const c of remote) {
+      merged.set((c.createdAt || '') + '|' + c.title, c);
+    }
+    for (const c of local) {
+      const key = (c.createdAt || '') + '|' + c.title;
+      if (!merged.has(key)) merged.set(key, c);
+    }
+    return Array.from(merged.values());
+  }
+
+  // Save with fetch-merge-save strategy to handle multi-device sync
+  async function saveData(retryCount = 0) {
     const token = getToken();
     if (!token || !scheduleData) return false;
 
     try {
       const currentMonth = getCurrentMonthKey();
 
-      // Separate current month items from archive items
-      const currentMonthItems = scheduleData.watchlist.filter(item => {
+      // Filter local watchlist to current month + non-completed
+      const localItems = scheduleData.watchlist.filter(item => {
         const month = getMonthKey(item.completedAt);
         return !month || month === currentMonth || item.status !== 'completed';
       });
 
-      // Data to save (only current month + non-completed)
-      const savePayload = {
-        weekly: scheduleData.weekly,
-        watchlist: currentMonthItems,
-        challenges: scheduleData.challenges || []
-      };
+      // Fetch latest remote data
+      const remote = await fetchRemoteData(token);
 
-      // Always get latest SHA before saving
-      if (!scheduleSha) {
-        const latest = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
-          headers: { 'Authorization': `token ${token}` }
-        });
-        if (latest.ok) {
-          const latestData = await latest.json();
-          scheduleSha = latestData.sha;
-        }
-      }
+      // Merge local changes with remote data
+      const mergedWatchlist = mergeWatchlists(localItems, remote.data.watchlist || []);
+      const mergedWeekly = mergeWeekly(scheduleData.weekly, remote.data.weekly || {});
+      const mergedChallenges = mergeChallenges(scheduleData.challenges || [], remote.data.challenges || []);
+
+      const savePayload = {
+        weekly: mergedWeekly,
+        watchlist: mergedWatchlist,
+        challenges: mergedChallenges
+      };
 
       const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
         method: 'PUT',
@@ -432,35 +509,16 @@
         body: JSON.stringify({
           message: '📊 Update media log',
           content: b64encode(JSON.stringify(savePayload)),
-          sha: scheduleSha
+          sha: remote.sha
         })
       });
 
       if (res.status === 409) {
-        // SHA conflict - fetch latest and retry once
-        console.log('SHA conflict, fetching latest...');
-        const latest = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
-          headers: { 'Authorization': `token ${token}` }
-        });
-        if (latest.ok) {
-          const latestData = await latest.json();
-          scheduleSha = latestData.sha;
-          const retry = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/schedule.json`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: '📊 Update media log',
-              content: b64encode(JSON.stringify(savePayload)),
-              sha: scheduleSha
-            })
-          });
-          if (retry.ok) {
-            const data = await retry.json();
-            scheduleSha = data.content.sha;
-            showToast('保存しました');
-            return true;
-          }
+        if (retryCount < 2) {
+          console.log('Conflict during merge-save, retrying...');
+          return await saveData(retryCount + 1);
         }
+        throw new Error('Conflict after max retries');
       }
 
       if (!res.ok) {
@@ -470,6 +528,12 @@
 
       const data = await res.json();
       scheduleSha = data.content.sha;
+
+      // Update local state with merged data
+      scheduleData.watchlist = mergedWatchlist;
+      scheduleData.weekly = mergedWeekly;
+      scheduleData.challenges = mergedChallenges;
+
       showToast('保存しました');
       return true;
     } catch (e) {

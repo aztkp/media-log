@@ -1518,8 +1518,12 @@
 
     const doneItems = scheduleData.watchlist
       .map((item, idx) => ({ ...item, idx }))
-      .filter(i => i.status === 'done')
-      .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+      .filter(i => i.status === 'done' || (i.type === 'streaming' && i.episodeHistory?.length > 0))
+      .sort((a, b) => {
+        const aDate = a.completedAt || a.episodeHistory?.[a.episodeHistory.length - 1]?.watchedAt || a.addedAt || '';
+        const bDate = b.completedAt || b.episodeHistory?.[b.episodeHistory.length - 1]?.watchedAt || b.addedAt || '';
+        return new Date(bDate) - new Date(aDate);
+      });
 
     if (doneItems.length === 0) {
       container.innerHTML = '<div class="empty">まだ記録がありません</div>';

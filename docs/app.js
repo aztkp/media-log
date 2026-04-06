@@ -409,7 +409,7 @@
 
   // Unique key for watchlist item identification
   function getItemKey(item) {
-    return (item.addedAt || item.completedAt || '') + '|' + item.title;
+    return (item.addedAt || '') + '|' + item.title;
   }
 
   // Pick the item with more progress or later timestamp

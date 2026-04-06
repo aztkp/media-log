@@ -27,6 +27,7 @@
 
   let scheduleData = null;
   let scheduleSha = null;
+  const deletedKeys = new Set();
 
   // Utils
   function b64decode(str) {
@@ -429,7 +430,10 @@
   function mergeWatchlists(local, remote) {
     const merged = new Map();
     for (const item of remote) {
-      merged.set(getItemKey(item), item);
+      const key = getItemKey(item);
+      if (!deletedKeys.has(key)) {
+        merged.set(key, item);
+      }
     }
     for (const item of local) {
       const key = getItemKey(item);
@@ -533,6 +537,7 @@
       scheduleData.watchlist = mergedWatchlist;
       scheduleData.weekly = mergedWeekly;
       scheduleData.challenges = mergedChallenges;
+      deletedKeys.clear();
 
       showToast('保存しました');
       return true;
@@ -1158,6 +1163,8 @@
 
   async function deleteItem(idx) {
     if (!confirm('削除しますか？')) return;
+    const item = scheduleData.watchlist[idx];
+    deletedKeys.add(getItemKey(item));
     scheduleData.watchlist.splice(idx, 1);
     await saveData();
     renderAll();
@@ -1809,6 +1816,7 @@
     const item = scheduleData.watchlist[idx];
     if (!confirm(`「${item.title}」を完全に削除しますか？`)) return;
 
+    deletedKeys.add(getItemKey(item));
     scheduleData.watchlist.splice(idx, 1);
     await saveData();
     renderAll();

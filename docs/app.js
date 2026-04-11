@@ -1181,7 +1181,7 @@
     content.innerHTML = `
       <div class="form-group">
         <label class="form-label">タイトル</label>
-        <input type="text" class="form-input" id="edit-title" value="${item.title || ''}">
+        <input type="text" class="form-input" id="edit-title" value="${escapeHtml(item.title || '')}">
       </div>
       <div class="form-group">
         <label class="form-label">メディア</label>
@@ -1322,6 +1322,7 @@
     });
 
     document.getElementById('edit-save').addEventListener('click', async () => {
+      const oldKey = getItemKey(item);
       item.title = document.getElementById('edit-title').value.trim();
       item.type = document.getElementById('edit-type').value;
       const newStatus = document.getElementById('edit-status').value;
@@ -1354,6 +1355,12 @@
         delete item.completedAt;
       }
       item.status = newStatus;
+
+      // If key changed (rename/addedAt), treat old key as deleted so merge drops the remote copy
+      const newKey = getItemKey(item);
+      if (oldKey !== newKey) {
+        deletedKeys.add(oldKey);
+      }
 
       await saveData();
       modal.classList.remove('show');
@@ -2054,11 +2061,11 @@
       </div>
       <div class="form-group">
         <label class="form-label">タイトル</label>
-        <input type="text" class="form-input" id="edit-diary-title" value="${item.title || ''}">
+        <input type="text" class="form-input" id="edit-diary-title" value="${escapeHtml(item.title || '')}">
       </div>
       <div class="form-group">
         <label class="form-label">内容</label>
-        <textarea class="form-textarea diary-textarea" id="edit-diary-content">${item.note || ''}</textarea>
+        <textarea class="form-textarea diary-textarea" id="edit-diary-content">${escapeHtml(item.note || '')}</textarea>
       </div>
       <div class="form-group">
         <label class="form-label">その時の音楽</label>
@@ -2069,15 +2076,15 @@
         <div class="music-preview" id="edit-diary-music-preview" style="display:${hasMusic ? 'flex' : 'none'};">
           ${item.music?.artwork ? `<img class="music-preview-artwork" src="${item.music.artwork}" alt="">` : '<span style="font-size:24px;">🎵</span>'}
           <div class="music-preview-info">
-            <div class="music-preview-title">${item.music?.title || ''}</div>
-            <div class="music-preview-artist">${item.music?.artist || ''}</div>
+            <div class="music-preview-title">${escapeHtml(item.music?.title || '')}</div>
+            <div class="music-preview-artist">${escapeHtml(item.music?.artist || '')}</div>
           </div>
           <button class="btn btn-sm" id="edit-diary-music-clear" type="button">×</button>
         </div>
-        <input type="hidden" id="edit-diary-music-title" value="${item.music?.title || ''}">
-        <input type="hidden" id="edit-diary-music-artist" value="${item.music?.artist || ''}">
-        <input type="hidden" id="edit-diary-music-artwork" value="${item.music?.artwork || ''}">
-        <input type="hidden" id="edit-diary-music-link" value="${item.music?.url || ''}">
+        <input type="hidden" id="edit-diary-music-title" value="${escapeHtml(item.music?.title || '')}">
+        <input type="hidden" id="edit-diary-music-artist" value="${escapeHtml(item.music?.artist || '')}">
+        <input type="hidden" id="edit-diary-music-artwork" value="${escapeHtml(item.music?.artwork || '')}">
+        <input type="hidden" id="edit-diary-music-link" value="${escapeHtml(item.music?.url || '')}">
       </div>
       <button class="btn btn-primary" id="edit-diary-save" style="width:100%;margin-top:12px;">保存</button>
     `;
@@ -2141,6 +2148,7 @@
     document.getElementById('edit-diary-music-clear')?.addEventListener('click', clearEditMusicPreview);
 
     document.getElementById('edit-diary-save').addEventListener('click', async () => {
+      const oldKey = getItemKey(item);
       const newDateVal = document.getElementById('edit-diary-date').value;
       item.title = document.getElementById('edit-diary-title').value.trim() || '無題';
       item.note = document.getElementById('edit-diary-content').value.trim() || undefined;
@@ -2165,6 +2173,12 @@
         artwork: musicArtwork || undefined,
         url: musicLink || undefined
       } : undefined;
+
+      // If key changed, treat old key as deleted so merge drops the remote copy
+      const newKey = getItemKey(item);
+      if (oldKey !== newKey) {
+        deletedKeys.add(oldKey);
+      }
 
       await saveData();
       modal.classList.remove('show');

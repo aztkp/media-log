@@ -28,6 +28,12 @@
   let scheduleData = null;
   let scheduleSha = null;
   const deletedKeys = new Set();
+  // Keys of items that were explicitly edited this session.
+  // During merge, these always prefer the local version (overwriting remote),
+  // because pickNewerItem's progress-based heuristic can't tell user edits
+  // that go "backwards" (e.g., moving completedAt to an earlier date,
+  // reverting status from done to want) apart from stale data.
+  const modifiedKeys = new Set();
 
   // Utils
   function b64decode(str) {
@@ -438,7 +444,13 @@
     for (const item of local) {
       const key = getItemKey(item);
       if (merged.has(key)) {
-        merged.set(key, pickNewerItem(item, merged.get(key)));
+        // If the user explicitly edited this item this session, local wins.
+        // Otherwise fall back to the progress-based heuristic.
+        if (modifiedKeys.has(key)) {
+          merged.set(key, item);
+        } else {
+          merged.set(key, pickNewerItem(item, merged.get(key)));
+        }
       } else {
         merged.set(key, item);
       }
@@ -538,6 +550,7 @@
       scheduleData.weekly = mergedWeekly;
       scheduleData.challenges = mergedChallenges;
       deletedKeys.clear();
+      modifiedKeys.clear();
 
       showToast('保存しました');
       return true;
@@ -1056,6 +1069,7 @@
     const item = scheduleData.watchlist[idx];
     item.status = 'done';
     item.completedAt = getAdjustedISOString();
+    modifiedKeys.add(getItemKey(item));
     await saveData();
     renderAll();
     showToast(`「${item.title}」完了！`);
@@ -1106,6 +1120,7 @@
         showToast(`「${item.title}」完了！`);
       }
 
+      modifiedKeys.add(getItemKey(item));
       await saveData();
       modal.classList.remove('show');
       renderAll();
@@ -1157,6 +1172,7 @@
       delete item.completedAt;
     }
 
+    modifiedKeys.add(getItemKey(item));
     await saveData();
     renderAll();
   }
@@ -1361,6 +1377,9 @@
       if (oldKey !== newKey) {
         deletedKeys.add(oldKey);
       }
+      // Mark as modified so merge prefers local (handles backward edits like
+      // moving completedAt to an earlier date or reverting status from done to want)
+      modifiedKeys.add(newKey);
 
       await saveData();
       modal.classList.remove('show');
@@ -1816,6 +1835,7 @@
 
     document.getElementById('episode-update').addEventListener('click', async () => {
       episode.note = document.getElementById('episode-note').value.trim() || undefined;
+      modifiedKeys.add(getItemKey(item));
       await saveData();
       modal.classList.remove('show');
       renderAll();
@@ -1841,6 +1861,7 @@
     item.status = 'want';
     delete item.completedAt;
 
+    modifiedKeys.add(getItemKey(item));
     await saveData();
     renderAll();
     showToast('見たいリストに戻しました');
@@ -2179,6 +2200,7 @@
       if (oldKey !== newKey) {
         deletedKeys.add(oldKey);
       }
+      modifiedKeys.add(newKey);
 
       await saveData();
       modal.classList.remove('show');

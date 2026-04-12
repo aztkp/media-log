@@ -458,26 +458,20 @@
     return Array.from(merged.values());
   }
 
-  // Merge weekly schedules with union strategy, preferring local edits
+  // Merge weekly schedules: local is base, add remote-only items
   function mergeWeekly(local, remote) {
     const merged = {};
     for (const day of Object.keys(DAY_NAMES)) {
       const localShows = local[day] || [];
       const remoteShows = remote[day] || [];
-      const localMap = new Map();
-      for (const show of localShows) {
-        localMap.set(show.name + '|' + show.type, show);
-      }
-      const seen = new Set();
-      const result = [];
+      // Start with local as-is (preserves edits, ordering, images)
+      const result = [...localShows];
+      const localKeys = new Set(localShows.map(s => s.name + '|' + s.type));
+      // Add any remote-only shows
       for (const show of remoteShows) {
-        const key = show.name + '|' + show.type;
-        seen.add(key);
-        // Prefer local version if it exists (may have updated fields like image)
-        result.push(localMap.get(key) || show);
-      }
-      for (const show of localShows) {
-        if (!seen.has(show.name + '|' + show.type)) result.push(show);
+        if (!localKeys.has(show.name + '|' + show.type)) {
+          result.push(show);
+        }
       }
       merged[day] = result;
     }
@@ -799,7 +793,7 @@
     content.innerHTML = `
       <div class="form-group">
         <label class="form-label">番組名</label>
-        <input type="text" class="form-input" id="edit-radio-name" value="${show.name || ''}">
+        <input type="text" class="form-input" id="edit-radio-name" value="${escapeHtml(show.name || '')}">
       </div>
       <div class="form-group">
         <label class="form-label">種類</label>
@@ -811,7 +805,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">URL（聴取・視聴リンク）</label>
-        <input type="url" class="form-input" id="edit-radio-url" value="${show.url || ''}" placeholder="https://...">
+        <input type="url" class="form-input" id="edit-radio-url" value="${escapeHtml(show.url || '')}" placeholder="https://...">
       </div>
       <div class="form-group">
         <label class="form-label">画像</label>

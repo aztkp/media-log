@@ -458,17 +458,23 @@
     return Array.from(merged.values());
   }
 
-  // Merge weekly schedules with union strategy
+  // Merge weekly schedules with union strategy, preferring local edits
   function mergeWeekly(local, remote) {
     const merged = {};
     for (const day of Object.keys(DAY_NAMES)) {
       const localShows = local[day] || [];
       const remoteShows = remote[day] || [];
+      const localMap = new Map();
+      for (const show of localShows) {
+        localMap.set(show.name + '|' + show.type, show);
+      }
       const seen = new Set();
       const result = [];
       for (const show of remoteShows) {
-        seen.add(show.name + '|' + show.type);
-        result.push(show);
+        const key = show.name + '|' + show.type;
+        seen.add(key);
+        // Prefer local version if it exists (may have updated fields like image)
+        result.push(localMap.get(key) || show);
       }
       for (const show of localShows) {
         if (!seen.has(show.name + '|' + show.type)) result.push(show);
